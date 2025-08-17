@@ -1,6 +1,12 @@
 # 🏆 Hacker League
 
-Welcome to **Hacker League** – a task-gamification system designed to recognize and reward the best contributors of HackerSchool through a structured competitive framework.
+<div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+  <img src="public/images/logo.png" alt="Hacker League Logo" width="150" height="150">
+  <div>
+    <h2>Welcome to <strong>Hacker League!</strong></h2>
+    <p>A task-gamification system designed to recognize and reward the best contributors of HackerSchool through a structured competitive framework.</p>
+  </div>
+</div>
 
 ---
 
@@ -187,6 +193,7 @@ The build folder contains static files that can be deployed to:
 - **Developers**: André Caseiro, André Santos, Armando Gonçalves, Gonçalo Azevedo
 - **Technical Expert**: José Lopes, Filipe Piçarra
 - **Game Design**: João Rodrigues, Filipe Vaz
+- **Logo Design**: Francisco Gonçalves
 
 ### **How to contribute** 
 
