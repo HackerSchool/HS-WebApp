@@ -13,6 +13,8 @@ const History = () => {
     const [entityFilter, setEntityFilter] = useState('all');
     const [pointsType, setPointsType] = useState('all');
     const [expandedRows, setExpandedRows] = useState(new Set());
+    const [showEntityDropdown, setShowEntityDropdown] = useState(false);
+    const [selectedEntities, setSelectedEntities] = useState(new Set());
 
     const fetchData = useCallback(async () => {
         try {
@@ -37,15 +39,41 @@ const History = () => {
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        // Reset selected entities when entity type changes
+        setSelectedEntities(new Set());
+        setEntityFilter('all');
+    }, [entityType]);
+
+    useEffect(() => {
+        // Close dropdown when clicking outside
+        const handleClickOutside = (event) => {
+            if (showEntityDropdown && !event.target.closest('.entity-dropdown-container')) {
+                setShowEntityDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEntityDropdown]);
+
     const getFilteredData = () => {
         let filtered = historyData;
         
         // Filter by entity
-        if (entityFilter !== 'all') {
+        if (entityFilter !== 'all' && entityFilter !== 'multiple') {
             if (entityType === 'teams') {
                 filtered = filtered.filter(entry => entry.equipa === entityFilter);
             } else {
                 filtered = filtered.filter(entry => entry.membro === entityFilter);
+            }
+        } else if (entityFilter === 'multiple' && selectedEntities.size > 0) {
+            if (entityType === 'teams') {
+                filtered = filtered.filter(entry => selectedEntities.has(entry.equipa));
+            } else {
+                filtered = filtered.filter(entry => selectedEntities.has(entry.membro));
             }
         }
         
@@ -85,7 +113,7 @@ const History = () => {
     };
 
     const getPointTypeColor = (type) => {
-        return type === 'PJ' ? '#ff6b6b' : '#4ecdff';
+        return type === 'PJ' ? 'rgb(231, 76, 60)' : 'rgb(52, 152, 219)';
     };
 
     const filteredData = getFilteredData();
@@ -103,6 +131,47 @@ const History = () => {
     const handleEntityFilterChange = (newFilter) => {
         setEntityFilter(newFilter);
         setCurrentPage(1);
+    };
+
+    const toggleEntitySelection = (entityName) => {
+        const newSelected = new Set(selectedEntities);
+        if (newSelected.has(entityName)) {
+            newSelected.delete(entityName);
+        } else {
+            newSelected.add(entityName);
+        }
+        setSelectedEntities(newSelected);
+        
+        // Update entityFilter based on selection
+        if (newSelected.size === 0) {
+            setEntityFilter('all');
+        } else if (newSelected.size === 1) {
+            setEntityFilter(Array.from(newSelected)[0]);
+        } else {
+            setEntityFilter('multiple');
+        }
+        setCurrentPage(1);
+    };
+
+    const selectAllEntities = () => {
+        const currentOptions = getEntityOptions();
+        const allNames = currentOptions.map(option => option.value);
+        setSelectedEntities(new Set(allNames));
+        setEntityFilter('multiple');
+        setCurrentPage(1);
+    };
+
+    const clearEntitySelection = () => {
+        setSelectedEntities(new Set());
+        setEntityFilter('all');
+        setCurrentPage(1);
+    };
+
+    const getSelectedEntitiesText = () => {
+        if (selectedEntities.size === 0) return 'All';
+        if (selectedEntities.size === 1) return Array.from(selectedEntities)[0];
+        if (selectedEntities.size === getEntityOptions().length) return 'All';
+        return `${selectedEntities.size} selected`;
     };
 
     const handlePointsTypeChange = (newType) => {
@@ -130,20 +199,71 @@ const History = () => {
                                 <th>
                                     <div className="header-controls">
                                         <span>{entityType === 'teams' ? 'Team' : 'Member'}</span>
-                                        <select 
-                                            value={entityType} 
-                                            onChange={(e) => handleEntityTypeChange(e.target.value)}
-                                            className="inline-select"
-                                        >
-                                            <option value="teams">Teams</option>
-                                            <option value="members">Members</option>
-                                        </select>
+                                        <div className="entity-selector">
+                                            <select 
+                                                value={entityType} 
+                                                onChange={(e) => handleEntityTypeChange(e.target.value)}
+                                                className="inline-select"
+                                            >
+                                                <option value="teams">Teams</option>
+                                                <option value="members">Members</option>
+                                            </select>
+                                            <div className="entity-dropdown-container">
+                                                <button 
+                                                    className="entity-dropdown-toggle"
+                                                    onClick={() => setShowEntityDropdown(!showEntityDropdown)}
+                                                >
+                                                    <span>▼</span>
+                                                </button>
+                                                {showEntityDropdown && (
+                                                    <div className="entity-dropdown">
+                                                        <div className="dropdown-header">
+                                                            <button 
+                                                                className="select-all-btn"
+                                                                onClick={selectAllEntities}
+                                                            >
+                                                                Select All
+                                                            </button>
+                                                            <button 
+                                                                className="clear-btn"
+                                                                onClick={clearEntitySelection}
+                                                            >
+                                                                Clear
+                                                            </button>
+                                                        </div>
+                                                        <div className="dropdown-content">
+                                                            {getEntityOptions().map(option => (
+                                                                <label key={option.value} className="checkbox-item">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedEntities.has(option.value)}
+                                                                        onChange={() => toggleEntitySelection(option.value)}
+                                                                    />
+                                                                    <span className="checkmark"></span>
+                                                                    {option.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                        <div className="dropdown-footer">
+                                                            <span className="selection-summary">
+                                                                {getSelectedEntitiesText()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </th>
                                 {entityType === 'members' && <th>Team</th>}
                                 <th>
                                     <div className="header-controls">
-                                        <span>Type</span>
+                                        <span>Description</span>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div className="header-controls">
+                                        <span>Points</span>
                                         <select 
                                             value={pointsType} 
                                             onChange={(e) => handlePointsTypeChange(e.target.value)}
@@ -152,23 +272,6 @@ const History = () => {
                                             <option value="all">All</option>
                                             <option value="PJ">PJ</option>
                                             <option value="PCC">PCC</option>
-                                        </select>
-                                    </div>
-                                </th>
-                                <th>
-                                    <div className="header-controls">
-                                        <span>Points</span>
-                                        <select 
-                                            value={entityFilter} 
-                                            onChange={(e) => handleEntityFilterChange(e.target.value)}
-                                            className="inline-select"
-                                        >
-                                            <option value="all">All</option>
-                                            {getEntityOptions().map(option => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
                                         </select>
                                     </div>
                                 </th>
@@ -192,33 +295,36 @@ const History = () => {
                                                 className={`history-row clickable-row ${isExpanded ? 'expanded' : ''}`}
                                                 onClick={() => toggleRowExpansion(rowId)}
                                             >
-                                                <td className="date-cell">{formatDate(entry.data)}</td>
-                                                <td className="entity-cell">
-                                                    {entityType === 'teams' ? entry.equipa : entry.membro}
-                                                </td>
-                                                {entityType === 'members' && (
-                                                    <td className="team-cell">{entry.equipa}</td>
-                                                )}
-                                                <td className="type-cell">
-                                                    <span 
-                                                        className="points-type"
-                                                        style={{ color: getPointTypeColor(entry.tipo) }}
-                                                    >
-                                                        {entry.tipo}
-                                                    </span>
-                                                </td>
-                                                <td className="points-cell">+{entry.pontos}</td>
-                                            </tr>
-                                            {isExpanded && (
-                                                <tr className="description-row">
-                                                    <td colSpan={entityType === 'members' ? 5 : 4} className="description-cell">
-                                                        <div className="description-content">
-                                                            <h4>📝 Activity Description</h4>
-                                                            <p>{entry.descrição}</p>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
+                                                 <td className="date-cell">{formatDate(entry.data)}</td>
+                                                 <td className="entity-cell">
+                                                     {entityType === 'teams' ? entry.equipa : entry.membro}
+                                                 </td>
+                                                 {entityType === 'members' && (
+                                                     <td className="team-cell">{entry.equipa}</td>
+                                                 )}
+                                                                                                   <td className="description-cell" title={entry.descrição}>
+                                                      {entry.descrição}
+                                                  </td>
+                                                 <td className="points-cell">
+                                                     <span 
+                                                         className="points-type"
+                                                         style={{ color: getPointTypeColor(entry.tipo) }}
+                                                     >
+                                                         {entry.tipo}
+                                                     </span>
+                                                     +{entry.pontos}
+                                                 </td>
+                                             </tr>
+                                             {isExpanded && (
+                                                                                              <tr className="description-row">
+                                                 <td colSpan={entityType === 'members' ? 5 : 4} className="description-cell">
+                                                     <div className="description-content">
+                                                         <h4>📝 Activity Full Description</h4>
+                                                         <p>{entry.descrição}</p>
+                                                     </div>
+                                                 </td>
+                                             </tr>
+                                             )}
                                         </React.Fragment>
                                     );
                                 })
