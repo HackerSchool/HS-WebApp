@@ -128,10 +128,7 @@ const History = () => {
         setCurrentPage(1);
     };
 
-    const handleEntityFilterChange = (newFilter) => {
-        setEntityFilter(newFilter);
-        setCurrentPage(1);
-    };
+
 
     const toggleEntitySelection = (entityName) => {
         const newSelected = new Set(selectedEntities);
