@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import './Navbar.css';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import "./Navbar.css";
 
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
@@ -10,7 +10,7 @@ const Navbar = () => {
 
     const handleLogout = async () => {
         await logout();
-        navigate('/login');
+        navigate("/login");
     };
 
     const toggleMenu = () => {
@@ -21,24 +21,31 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-container">
                 <Link to="/" className="navbar-brand">
-                    <img src="/images/logo2.png" alt="Hacker League" className="navbar-logo" />
+                    <img
+                        src="/images/logo2.png"
+                        alt="Hacker League"
+                        className="navbar-logo"
+                    />
                     Hacker League
                 </Link>
 
-                <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
+                <div className={`navbar-menu ${isMenuOpen ? "active" : ""}`}>
                     {isAuthenticated && (
                         <>
                             <Link to="/leaderboard" className="navbar-link">
                                 Leaderboard
                             </Link>
-                                                    <Link to="/history" className="navbar-link">
-                            Log
+                            <Link to="/history" className="navbar-link">
+                                Log
                             </Link>
                             <Link to="/hall-of-fame" className="navbar-link">
                                 Hall of Fame
                             </Link>
-                            {user?.roles?.includes('admin') && (
-                                <Link to="/admin" className="navbar-link navbar-link-admin">
+                            {user?.roles?.includes("admin") && (
+                                <Link
+                                    to="/admin"
+                                    className="navbar-link navbar-link-admin"
+                                >
                                     Admin
                                 </Link>
                             )}
@@ -53,7 +60,10 @@ const Navbar = () => {
                     {isAuthenticated ? (
                         <div className="user-info">
                             <span className="username">{user?.username}</span>
-                            <button onClick={handleLogout} className="btn btn-secondary">
+                            <button
+                                onClick={handleLogout}
+                                className="btn btn-secondary"
+                            >
                                 Logout
                             </button>
                         </div>
@@ -64,8 +74,8 @@ const Navbar = () => {
                     )}
                 </div>
 
-                <button 
-                    className={`hamburger-menu ${isMenuOpen ? 'active' : ''}`}
+                <button
+                    className={`hamburger-menu ${isMenuOpen ? "active" : ""}`}
                     onClick={toggleMenu}
                 >
                     <span></span>
@@ -77,4 +87,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar; 
+export default Navbar;

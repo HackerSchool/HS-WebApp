@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockLeaderboardAPI } from '../../services/mockDataService';
 import './Leaderboard.css';
@@ -212,7 +212,7 @@ const LeaderboardTable = () => {
                         </thead>
                         <tbody>
                             {sortedTeams.map((team, index) => (
-                                <React.Fragment key={team.name}>
+                                <Fragment key={team.name}>
                                     <tr 
                                         className={`${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : index === 3 ? 'rank-4' : index === 4 ? 'rank-5' : 'top-three'} ${expandedTeams.has(team.name) ? 'expanded' : ''}`}
                                         onClick={() => toggleTeamExpansion(team.name)}
@@ -300,7 +300,7 @@ const LeaderboardTable = () => {
                                             </td>
                                         </tr>
                                     )}
-                                </React.Fragment>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
@@ -354,7 +354,7 @@ const LeaderboardTable = () => {
                         </thead>
                         <tbody>
                             {sortedIndividuals.map((individual, index) => (
-                                <React.Fragment key={individual.name}>
+                                <Fragment key={individual.name}>
                                     <tr 
                                         className={`${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : index === 3 ? 'rank-4' : index === 4 ? 'rank-5' : 'top-three'} ${expandedIndividuals.has(individual.name) ? 'expanded' : ''}`}
                                         onClick={() => toggleIndividualExpansion(individual.name)}
@@ -440,7 +440,7 @@ const LeaderboardTable = () => {
                                             </td>
                                         </tr>
                                     )}
-                                </React.Fragment>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
@@ -450,4 +450,4 @@ const LeaderboardTable = () => {
     );
 };
 
-export default LeaderboardTable; 
+export default LeaderboardTable;

@@ -1,6 +1,5 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const PrivateRoute = ({ children, requireAdmin = false }) => {
     const { user, isAuthenticated, loading } = useAuth();
@@ -14,11 +13,11 @@ const PrivateRoute = ({ children, requireAdmin = false }) => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (requireAdmin && (!user?.roles || !user.roles.includes('admin'))) {
+    if (requireAdmin && (!user?.roles || !user.roles.includes("admin"))) {
         return <Navigate to="/" replace />;
     }
 
     return children;
 };
 
-export default PrivateRoute; 
+export default PrivateRoute;
