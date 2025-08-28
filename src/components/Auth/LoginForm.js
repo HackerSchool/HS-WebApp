@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import './Auth.css';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import "./Auth.css";
 
 const LoginForm = () => {
     const [formData, setFormData] = useState({
-        username: '',
-        password: ''
+        username: "",
+        password: "",
     });
     const [loading, setLoading] = useState(false);
-    
+
     const { login, error } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    const from = location.state?.from?.pathname || '/leaderboard';
+    const from = location.state?.from?.pathname || "/leaderboard";
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
     };
 
@@ -32,26 +32,22 @@ const LoginForm = () => {
             await login(formData.username, formData.password);
             navigate(from, { replace: true });
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error("Login failed:", error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleFenixOAuth = () => {
-        window.location.href = 'http://localhost:5000/fenix-auth';
+        window.location.href = "http://localhost:5000/fenix-auth";
     };
 
     return (
         <div className="auth-container">
             <div className="auth-card">
                 <h2>Login to Hacker League</h2>
-                
-                {error && (
-                    <div className="alert alert-error">
-                        {error}
-                    </div>
-                )}
+
+                {error && <div className="alert alert-error">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
@@ -84,12 +80,12 @@ const LoginForm = () => {
                         />
                     </div>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="btn btn-primary auth-btn"
                         disabled={loading}
                     >
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
 
@@ -97,7 +93,7 @@ const LoginForm = () => {
                     <span>or</span>
                 </div>
 
-                <button 
+                <button
                     onClick={handleFenixOAuth}
                     className="btn btn-secondary auth-btn"
                     disabled={loading}
@@ -113,4 +109,4 @@ const LoginForm = () => {
     );
 };
 
-export default LoginForm; 
+export default LoginForm;
