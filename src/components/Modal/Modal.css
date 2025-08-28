@@ -1,0 +1,165 @@
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.95) 0%, 
+        rgba(35, 34, 32, 0.95) 50%, 
+        rgba(50, 48, 45, 0.95) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    color: white;
+    position: relative;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-small {
+    width: 90%;
+    max-width: 400px;
+}
+
+.modal-medium {
+    width: 90%;
+    max-width: 600px;
+}
+
+.modal-large {
+    width: 95%;
+    max-width: 900px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6dba76, #8bc34a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.modal-body {
+    padding: 1.5rem 2rem 2rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Custom scrollbar for modal body */
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 0.5rem;
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+        max-height: 95vh;
+        margin: 0.5rem 0;
+    }
+    
+    .modal-header {
+        padding: 1rem 1.5rem 0.75rem;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-body {
+        padding: 1rem 1.5rem 1.5rem;
+    }
+    
+    .modal-large,
+    .modal-medium {
+        width: 100%;
+        max-width: none;
+    }
+}

@@ -1,0 +1,247 @@
+/* Points History Styles */
+.points-history {
+    width: 100%;
+}
+
+.points-table-container {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.4) 0%, 
+        rgba(35, 34, 32, 0.4) 50%, 
+        rgba(50, 48, 45, 0.4) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.points-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white;
+}
+
+.points-table th {
+    background: linear-gradient(135deg, 
+        rgba(109, 186, 118, 0.2) 0%, 
+        rgba(139, 195, 74, 0.2) 100%);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.points-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.points-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6dba76, #8bc34a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 1rem;
+}
+
+.description-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.points-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+}
+
+.points-pj {
+    background: linear-gradient(135deg, #ffd93d, #ff9800);
+}
+
+.points-pcc {
+    background: linear-gradient(135deg, #6dba76, #4caf50);
+}
+
+.type-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-pj {
+    background: linear-gradient(135deg, rgba(255, 217, 61, 0.2), rgba(255, 152, 0, 0.2));
+    color: #ffd93d;
+    border: 1px solid rgba(255, 217, 61, 0.3);
+}
+
+.type-pcc {
+    background: linear-gradient(135deg, rgba(109, 186, 118, 0.2), rgba(76, 175, 80, 0.2));
+    color: #6dba76;
+    border: 1px solid rgba(109, 186, 118, 0.3);
+}
+
+/* Points Form Styles */
+.points-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.users-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.user-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.user-checkbox label:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #6dba76;
+}
+
+.user-name {
+    font-weight: 500;
+    color: white;
+}
+
+.user-username {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.selected-user {
+    padding: 0.75rem;
+    background: rgba(109, 186, 118, 0.1);
+    border: 1px solid rgba(109, 186, 118, 0.3);
+    border-radius: 8px;
+    color: #6dba76;
+    font-weight: 500;
+}
+
+.form-error {
+    color: #ff6b6b;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Custom scrollbar for users selection */
+.users-selection::-webkit-scrollbar {
+    width: 6px;
+}
+
+.users-selection::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.users-selection::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.users-selection::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .points-table-container {
+        overflow-x: auto;
+    }
+    
+    .points-table {
+        min-width: 800px;
+    }
+    
+    .users-selection {
+        grid-template-columns: 1fr;
+    }
+    
+    .description-cell {
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .points-table th,
+    .points-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .member-info {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .description-cell {
+        max-width: 120px;
+    }
+}
