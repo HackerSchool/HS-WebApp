@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="346.62344"
+   height="83.69326"
+   viewBox="0 0 346.62344 83.69326"
+   xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(-1.1109725,-117.39277)">
+    <text
+       xmlSpace="preserve"
+       style="font-style:normal;font-weight:normal;font-size:37.8613px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.283959"
+       x="100.3191"
+       y="174.84412">
+       <tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:37.8613px;font-family:Lato;-inkscape-font-specification:Lato;fill:#ffffff;fill-opacity:1;stroke-width:0.283959"
+         x="100.3191"
+         y="174.84412">Hacker League</tspan>
+    </text>
+    <g
+       transform="matrix(0.08177083,0,0,0.08177083,-136.9214,57.08593)">
+      <path
+         d="m 1720,1254 c 0,-265.097 214.9,-480 480,-480 265.1,0 480,214.903 480,480 0,265.1 -214.9,480 -480,480 -265.1,0 -480,-214.9 -480,-480 z"
+         fill="#6dba76"
+         fillRule="evenodd" />
+      <path
+         d="m 1986.15,949.371 140.01,-61.291 -39.59,147.62 -140.01,61.29 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1878.18,1050.93 39.94,-67.504 18.31,76.264 -39.94,67.5 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 2001.88,1088.14 -31.41,60.05 -74.12,1.32 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1817.75,1197.17 18.64,-112.93 52.7,101.61 -18.65,112.93 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1947.11,1169.36 12.34,66.63 -57.52,46.78 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1979.68,1309.99 6.75,67.43 -61.22,41.82 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1883.44,1496.92 101.91,-65.63 100.33,36.94 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1777.8,1263.47 133.07,70.44 -32.14,116.95 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 1955.57,1623.86 67.31,-109 113.85,3.7 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="m 2110,1582 90.34,-98 86.66,98 z"
+         fill="#2b2a28"
+         fillRule="evenodd" />
+      <path
+         d="M 0,137.752 66.2162,0 132.432,137.752 66.2162,275.504 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(-0.758299,0.651907,0.651907,0.758299,2324.05,845.644)" />
+      <path
+         d="M 0,72.6938 29.4544,0 58.9088,72.6938 29.4544,145.388 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(-0.988866,0.148807,0.148807,0.988866,2511,979.773)" />
+      <path
+         d="M 0,36.1279 57.3382,0 122.079,36.1279 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(0.864434,0.502747,0.502747,-0.864434,2379.96,1120.1)" />
+      <path
+         d="M 0,108.612 36.1143,0 72.2286,108.612 36.1143,217.223 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(-0.987641,-0.156736,-0.156736,0.987641,2599.27,1090.63)" />
+      <path
+         d="M 0,36.1279 57.3382,0 122.079,36.1279 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(0.370059,0.929008,0.929008,-0.370059,2419.33,1183.46)" />
+      <path
+         d="M 0,36.1279 57.3382,0 122.079,36.1279 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(0.446145,0.894961,0.894961,-0.446145,2387.99,1326.84)" />
+      <path
+         d="M 0,50.6675 110.122,0 204.266,50.6675 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(-0.990087,-0.140455,-0.140455,0.990087,2523.67,1447.49)" />
+      <path
+         d="M 0,83.7563 125.117,0 212.845,83.7563 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(-0.474168,0.880434,0.880434,0.474168,2548.45,1224.48)" />
+      <path
+         d="M 0,60.4155 112.962,0 209.533,60.4155 Z"
+         fill="#2b2a28"
+         fillRule="evenodd"
+         transform="matrix(-0.86457,-0.502512,-0.502512,0.86457,2474.78,1572.35)" />
+    </g>
+  </g>
+</svg>

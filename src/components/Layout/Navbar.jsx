@@ -1,12 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Navbar.css";
 
 const Navbar = () => {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Don't show navbar on login page
+    if (location.pathname === "/login" || location.pathname === "/") {
+        return null;
+    }
 
     const handleLogout = async () => {
         await logout();

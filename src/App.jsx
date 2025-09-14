@@ -68,9 +68,7 @@ function App() {
             <Router>
                 <div className="app">
                     <Navbar />
-                    <main className="main-content">
-                        <AppRoutes />
-                    </main>
+                    <AppRoutes />
                 </div>
             </Router>
         </AuthProvider>
