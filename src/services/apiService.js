@@ -1,4 +1,4 @@
-const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
 
 export async function apiRequest(endpoint, method = 'GET', body = null, includeCredentials = true) {
     const options = {

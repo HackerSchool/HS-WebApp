@@ -1,360 +1,223 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { mockLeaderboardAPI } from '../../services/mockDataService';
+import { getTasks } from '../../services/taskService';
+import { getMembers } from '../../services/memberService';
 import './History.css';
 
+// Versão com layout IGUAL ao do mock/hardcoded (filtros dentro do header da tabela)
 const History = () => {
-    const [historyData, setHistoryData] = useState([]);
-    const [teams, setTeams] = useState([]);
-    const [individuals, setIndividuals] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
-    const [entityType, setEntityType] = useState('teams');
-    const [entityFilter, setEntityFilter] = useState('all');
-    const [pointsType, setPointsType] = useState('all');
-    const [expandedRows, setExpandedRows] = useState(new Set());
-    const [showEntityDropdown, setShowEntityDropdown] = useState(false);
-    const [selectedEntities, setSelectedEntities] = useState(new Set());
+  // Dados
+  const [historyData, setHistoryData] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [individuals, setIndividuals] = useState([]);
 
-    const fetchData = useCallback(async () => {
-        try {
-            setLoading(true);
-            const [history, teamsData, individualsData] = await Promise.all([
-                mockLeaderboardAPI.getAllHistory(),
-                mockLeaderboardAPI.getTeams(),
-                mockLeaderboardAPI.getIndividuals()
-            ]);
-            
-            setHistoryData(history);
-            setTeams(teamsData);
-            setIndividuals(individualsData);
-        } catch (error) {
-            console.error('Error fetching history data:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+  // Estado UI
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+  // Filtros (embutidos no cabeçalho da tabela)
+  const [entityType, setEntityType] = useState('teams'); // 'teams' | 'individuals'
+  const [selectedEntities, setSelectedEntities] = useState(new Set()); // multi-seleção via botão do cabeçalho
+  const [showEntityDropdown, setShowEntityDropdown] = useState(false);
+  const [pointsType, setPointsType] = useState('all'); // 'all' | 'PJ' | 'PCC'
 
-    useEffect(() => {
-        // Reset selected entities when entity type changes
-        setSelectedEntities(new Set());
-        setEntityFilter('all');
-    }, [entityType]);
+  // ------- Fetch + Transform -------
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [tasks, members] = await Promise.all([
+        getTasks(),
+        getMembers().catch(() => []),
+      ]);
 
-    useEffect(() => {
-        // Close dropdown when clicking outside
-        const handleClickOutside = (event) => {
-            if (showEntityDropdown && !event.target.closest('.entity-dropdown-container')) {
-                setShowEntityDropdown(false);
-            }
-        };
+      const usernameToName = new Map((members || []).map(m => [m?.username, m?.name || m?.username || '']));
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showEntityDropdown]);
+      const normPointType = (v) => {
+        if (v === 'PJ' || v === 'PCC') return v;
+        if (typeof v === 'number') return v === 0 ? 'PJ' : v === 1 ? 'PCC' : 'OTHER';
+        const inner = (v?.value ?? v?.name ?? v?.key ?? v ?? '').toString().toLowerCase();
+        if (inner === 'pj') return 'PJ';
+        if (inner === 'pcc') return 'PCC';
+        return 'OTHER';
+      };
 
-    const getFilteredData = () => {
-        let filtered = historyData;
-        
-        // Filter by entity
-        if (entityFilter !== 'all' && entityFilter !== 'multiple') {
-            if (entityType === 'teams') {
-                filtered = filtered.filter(entry => entry.equipa === entityFilter);
-            } else {
-                filtered = filtered.filter(entry => entry.membro === entityFilter);
-            }
-        } else if (entityFilter === 'multiple' && selectedEntities.size > 0) {
-            if (entityType === 'teams') {
-                filtered = filtered.filter(entry => selectedEntities.has(entry.equipa));
-            } else {
-                filtered = filtered.filter(entry => selectedEntities.has(entry.membro));
-            }
-        }
-        
-        // Filter by points type
-        if (pointsType !== 'all') {
-            filtered = filtered.filter(entry => entry.tipo === pointsType);
-        }
-        
-        return filtered;
-    };
+      const history = (tasks || [])
+        .filter(t => !!t?.finished_at)
+        .map(t => ({
+          date: t.finished_at, // ISO
+          team: t.project_name || '',
+          member: usernameToName.get(t.username) || t.username || '',
+          type: normPointType(t.point_type),
+          points: Number(t.points) || 0,
+          description: t.description || '',
+          project: t.project_name || '',
+        }))
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const getEntityOptions = () => {
-        if (entityType === 'teams') {
-            return teams.map(team => ({ value: team.name, label: team.name }));
-        } else {
-            return individuals.map(individual => ({ value: individual.name, label: individual.name }));
-        }
-    };
-
-    const toggleRowExpansion = (rowId) => {
-        const newExpandedRows = new Set(expandedRows);
-        if (newExpandedRows.has(rowId)) {
-            newExpandedRows.delete(rowId);
-        } else {
-            newExpandedRows.add(rowId);
-        }
-        setExpandedRows(newExpandedRows);
-    };
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric',
-            month: 'short', 
-            day: 'numeric'
-        });
-    };
-
-    const getPointTypeColor = (type) => {
-        return type === 'PJ' ? 'rgb(231, 76, 60)' : 'rgb(52, 152, 219)';
-    };
-
-    const filteredData = getFilteredData();
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const pageData = filteredData.slice(startIndex, endIndex);
-
-    const handleEntityTypeChange = (newType) => {
-        setEntityType(newType);
-        setEntityFilter('all');
-        setCurrentPage(1);
-    };
-
-    const handleEntityFilterChange = (newFilter) => {
-        setEntityFilter(newFilter);
-        setCurrentPage(1);
-    };
-
-    const toggleEntitySelection = (entityName) => {
-        const newSelected = new Set(selectedEntities);
-        if (newSelected.has(entityName)) {
-            newSelected.delete(entityName);
-        } else {
-            newSelected.add(entityName);
-        }
-        setSelectedEntities(newSelected);
-        
-        // Update entityFilter based on selection
-        if (newSelected.size === 0) {
-            setEntityFilter('all');
-        } else if (newSelected.size === 1) {
-            setEntityFilter(Array.from(newSelected)[0]);
-        } else {
-            setEntityFilter('multiple');
-        }
-        setCurrentPage(1);
-    };
-
-    const selectAllEntities = () => {
-        const currentOptions = getEntityOptions();
-        const allNames = currentOptions.map(option => option.value);
-        setSelectedEntities(new Set(allNames));
-        setEntityFilter('multiple');
-        setCurrentPage(1);
-    };
-
-    const clearEntitySelection = () => {
-        setSelectedEntities(new Set());
-        setEntityFilter('all');
-        setCurrentPage(1);
-    };
-
-    const getSelectedEntitiesText = () => {
-        if (selectedEntities.size === 0) return 'All';
-        if (selectedEntities.size === 1) return Array.from(selectedEntities)[0];
-        if (selectedEntities.size === getEntityOptions().length) return 'All';
-        return `${selectedEntities.size} selected`;
-    };
-
-    const handlePointsTypeChange = (newType) => {
-        setPointsType(newType);
-        setCurrentPage(1);
-    };
-
-    if (loading) {
-        return <div className="loading">Loading log...</div>;
+      setHistoryData(history);
+      setTeams(Array.from(new Set(history.map(h => h.team))).filter(Boolean).sort());
+      setIndividuals(Array.from(new Set(history.map(h => h.member))).filter(Boolean).sort());
+    } catch (err) {
+      console.error('History fetch error:', err);
+      setLoadError('Não foi possível carregar o histórico.');
+      setHistoryData([]);
+      setTeams([]);
+      setIndividuals([]);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    return (
-        <div className="history-container">
-                            <header className="history-header">
-                    <h1>📊 Points Log</h1>
-                    <p>Track all point activities and achievements</p>
-                </header>
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-            <div className="history-content">
-                <div className="history-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>
-                                    <div className="header-controls">
-                                        <span>{entityType === 'teams' ? 'Team' : 'Member'}</span>
-                                        <div className="entity-selector">
-                                            <select 
-                                                value={entityType} 
-                                                onChange={(e) => handleEntityTypeChange(e.target.value)}
-                                                className="inline-select"
-                                            >
-                                                <option value="teams">Teams</option>
-                                                <option value="members">Members</option>
-                                            </select>
-                                            <div className="entity-dropdown-container">
-                                                <button 
-                                                    className="entity-dropdown-toggle"
-                                                    onClick={() => setShowEntityDropdown(!showEntityDropdown)}
-                                                >
-                                                    <span>▼</span>
-                                                </button>
-                                                {showEntityDropdown && (
-                                                    <div className="entity-dropdown">
-                                                        <div className="dropdown-header">
-                                                            <button 
-                                                                className="select-all-btn"
-                                                                onClick={selectAllEntities}
-                                                            >
-                                                                Select All
-                                                            </button>
-                                                            <button 
-                                                                className="clear-btn"
-                                                                onClick={clearEntitySelection}
-                                                            >
-                                                                Clear
-                                                            </button>
-                                                        </div>
-                                                        <div className="dropdown-content">
-                                                            {getEntityOptions().map(option => (
-                                                                <label key={option.value} className="checkbox-item">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={selectedEntities.has(option.value)}
-                                                                        onChange={() => toggleEntitySelection(option.value)}
-                                                                    />
-                                                                    <span className="checkmark"></span>
-                                                                    {option.label}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                        <div className="dropdown-footer">
-                                                            <span className="selection-summary">
-                                                                {getSelectedEntitiesText()}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </th>
-                                {entityType === 'members' && <th>Team</th>}
-                                <th>
-                                    <div className="header-controls">
-                                        <span>Description</span>
-                                    </div>
-                                </th>
-                                <th>
-                                    <div className="header-controls">
-                                        <span>Points</span>
-                                        <select 
-                                            value={pointsType} 
-                                            onChange={(e) => handlePointsTypeChange(e.target.value)}
-                                            className="inline-select"
-                                        >
-                                            <option value="all">All</option>
-                                            <option value="PJ">PJ</option>
-                                            <option value="PCC">PCC</option>
-                                        </select>
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pageData.length === 0 ? (
-                                <tr>
-                                    <td colSpan={entityType === 'members' ? 5 : 4} className="no-data">
-                                        No log entries found for the selected filters.
-                                    </td>
-                                </tr>
-                            ) : (
-                                pageData.map((entry, index) => {
-                                    const rowId = `history-row-${currentPage}-${index}`;
-                                    const isExpanded = expandedRows.has(rowId);
-                                    
-                                    return (
-                                        <React.Fragment key={rowId}>
-                                            <tr 
-                                                className={`history-row clickable-row ${isExpanded ? 'expanded' : ''}`}
-                                                onClick={() => toggleRowExpansion(rowId)}
-                                            >
-                                                 <td className="date-cell">{formatDate(entry.data)}</td>
-                                                 <td className="entity-cell">
-                                                     {entityType === 'teams' ? entry.equipa : entry.membro}
-                                                 </td>
-                                                 {entityType === 'members' && (
-                                                     <td className="team-cell">{entry.equipa}</td>
-                                                 )}
-                                                                                                   <td className="description-cell" title={entry.descrição}>
-                                                      {entry.descrição}
-                                                  </td>
-                                                 <td className="points-cell">
-                                                     <span 
-                                                         className="points-type"
-                                                         style={{ color: getPointTypeColor(entry.tipo) }}
-                                                     >
-                                                         {entry.tipo}
-                                                     </span>
-                                                     +{entry.pontos}
-                                                 </td>
-                                             </tr>
-                                             {isExpanded && (
-                                                                                              <tr className="description-row">
-                                                 <td colSpan={entityType === 'members' ? 5 : 4} className="description-cell">
-                                                     <div className="description-content">
-                                                         <h4>📝 Activity Full Description</h4>
-                                                         <p>{entry.descrição}</p>
-                                                     </div>
-                                                 </td>
-                                             </tr>
-                                             )}
-                                        </React.Fragment>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!e.target.closest('.entity-dropdown-container')) setShowEntityDropdown(false);
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
+
+  // ------- Helpers -------
+  const fmtDate = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const opts = { month: 'short', day: '2-digit', year: 'numeric' };
+    // Ex.: Jan 15, 2024
+    return d.toLocaleDateString('en-US', opts);
+  };
+
+  const visibleEntities = entityType === 'teams' ? teams : individuals;
+
+  const filtered = historyData.filter((row) => {
+    if (pointsType !== 'all' && row.type !== pointsType) return false;
+    if (selectedEntities.size > 0) {
+      if (entityType === 'teams' && !selectedEntities.has(row.team)) return false;
+      if (entityType === 'individuals' && !selectedEntities.has(row.member)) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // ------- Render -------
+  return (
+    <div className="history-container">
+      <div className="history-header">
+        <h1>Points Log</h1>
+        <p>Track all point activities and achievements</p>
+      </div>
+
+      <div className="history-content">
+        {loading ? (
+          <div className="loading">A carregar…</div>
+        ) : loadError ? (
+          <div className="loading">{loadError}</div>
+        ) : (
+          <div className="history-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>DATE</th>
+                  <th>
+                    <div className="th-group">
+                      <span>TEAM</span>
+                      <div className="th-controls">
+                        <select className="inline-select" value={entityType} onChange={(e) => { setEntityType(e.target.value); setSelectedEntities(new Set()); setCurrentPage(1); }}>
+                          <option value="teams">Teams</option>
+                          <option value="individuals">Individuals</option>
+                        </select>
+                        <button type="button" className="inline-select entity-dropdown-toggle" onClick={(e) => { e.stopPropagation(); setShowEntityDropdown(v => !v); }}>
+                          ▾
+                        </button>
+                      </div>
+                    </div>
+                    {/* Dropdown multi-seleção */}
+                    {showEntityDropdown && (
+                      <div className="entity-dropdown entity-dropdown-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="dropdown-header">
+                          <button className="select-all-btn" onClick={() => setSelectedEntities(new Set(visibleEntities))}>Selecionar todos</button>
+                          <button className="clear-btn" onClick={() => setSelectedEntities(new Set())}>Limpar</button>
+                        </div>
+                        <div className="dropdown-content">
+                          {visibleEntities.map((entity) => (
+                            <label key={entity} className="entity-selector">
+                              <input
+                                type="checkbox"
+                                checked={selectedEntities.has(entity)}
+                                onChange={() => {
+                                  const next = new Set(selectedEntities);
+                                  next.has(entity) ? next.delete(entity) : next.add(entity);
+                                  setSelectedEntities(next);
+                                  setCurrentPage(1);
+                                }}
+                              />
+                              <span className="checkmark" />
+                              {entity}
+                            </label>
+                          ))}
+                        </div>
+                        <div className="dropdown-footer">
+                          <span className="selection-summary">{selectedEntities.size} selecionado(s)</span>
+                        </div>
+                      </div>
+                    )}
+                  </th>
+                  <th>DESCRIPTION</th>
+                  <th>
+                    <div className="th-group">
+                      <span>POINTS</span>
+                      <div className="th-controls">
+                        <select className="inline-select" value={pointsType} onChange={(e) => { setPointsType(e.target.value); setCurrentPage(1); }}>
+                          <option value="all">All</option>
+                          <option value="PJ">PJ</option>
+                          <option value="PCC">PCC</option>
+                        </select>
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.length === 0 ? (
+                  <tr><td colSpan={4} className="no-data">Sem resultados</td></tr>
+                ) : (
+                  currentItems.map((item, idx) => (
+                    <tr key={idx} className="history-row">
+                      <td className="date-cell">{fmtDate(item.date)}</td>
+                      <td className="team-cell"><strong>{item.team}</strong></td>
+                      <td className="description-cell">{item.project ? `${item.project} - ` : ''}{item.description || '—'}</td>
+                      <td className="points-cell">
+                        <span
+                          className="points-type pill"
+                          style={{
+                            color: item.type === 'PJ' ? '#ffd700' : item.type === 'PCC' ? '#00e5ff' : '#e0e0e0'
+                          }}
+                        >
+                          {item.type}
+                        </span>
+                        <span className="points-value">{item.points > 0 ? `+${item.points}` : item.points}</span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
 
             <div className="pagination-controls">
-                <button 
-                    className="pagination-btn" 
-                    disabled={currentPage <= 1}
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                >
-                    <span>←</span> Previous
-                </button>
-                <div className="page-info">
-                    <span>{currentPage}</span> of <span>{totalPages}</span>
-                </div>
-                <button 
-                    className="pagination-btn"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                >
-                    Next <span>→</span>
-                </button>
+              <button className="pagination-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>◀ Anterior</button>
+              <div className="page-info">Página <span>{currentPage}</span> de <span>{totalPages}</span></div>
+              <button className="pagination-btn" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>Seguinte ▶</button>
             </div>
-        </div>
-    );
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default History;
