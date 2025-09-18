@@ -1,4 +1,5 @@
-const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+const apiBaseUrl = 'http://localhost:8080'; // Hardcoded for now
+console.log('API Base URL:', apiBaseUrl);
 
 export async function apiRequest(endpoint, method = 'GET', body = null, includeCredentials = true) {
     const options = {
@@ -14,6 +15,8 @@ export async function apiRequest(endpoint, method = 'GET', body = null, includeC
     }
 
     try {
+        console.log(`Making API request to: ${apiBaseUrl}${endpoint}`);
+        console.log('Request options:', options);
         const response = await fetch(`${apiBaseUrl}${endpoint}`, options);
         
         if (!response.ok) {
@@ -44,7 +47,7 @@ export const authAPI = {
     },
     
     checkAuth: async () => {
-        return apiRequest('/auth/check');
+        return apiRequest('/me');
     }
 };
 

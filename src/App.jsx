@@ -11,6 +11,8 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import AdminPage from "./pages/AdminPage";
 import HistoryPage from "./pages/HistoryPage";
 import HallOfFamePage from "./pages/HallOfFamePage";
+import HackNightPage from "./pages/HackNightPage";
+import SeasonPage from "./pages/SeasonPage";
 
 function AppRoutes() {
     return (
@@ -47,6 +49,22 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <HallOfFamePage />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/hacknight"
+                element={
+                    <PrivateRoute>
+                        <HackNightPage />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/season"
+                element={
+                    <PrivateRoute>
+                        <SeasonPage />
                     </PrivateRoute>
                 }
             />

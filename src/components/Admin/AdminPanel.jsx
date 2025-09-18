@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import adminAPIService from '../../services/adminAPIService';
 import UserManagement from './UserManagement/UserManagement';
 import PointsHistory from './PointsHistory/PointsHistory';
+import HallOfFameAdmin from './ContentManagement/HallOfFameAdmin';
+import HackNightAdmin from './ContentManagement/HackNightAdmin';
+import SeasonAdmin from './ContentManagement/SeasonAdmin';
 import './Admin.css';
 
 const AdminPanel = () => {
@@ -16,6 +20,18 @@ const AdminPanel = () => {
         }
     }, [user]);
 
+    // Connect WebSocket when admin panel loads
+    useEffect(() => {
+        console.log('🔧 Admin Panel loaded - connecting WebSocket for real-time updates');
+        adminAPIService.connectWebSocket('AdminPanel');
+
+        // Disconnect WebSocket when admin panel unmounts
+        return () => {
+            console.log('🔧 Admin Panel unmounted - disconnecting WebSocket to save resources');
+            adminAPIService.disconnectWebSocket('AdminPanel');
+        };
+    }, []);
+
     const tabs = [
         {
             id: 'users',
@@ -28,6 +44,24 @@ const AdminPanel = () => {
             label: 'Points History',
             icon: '🏆',
             component: PointsHistory
+        },
+        {
+            id: 'hall-of-fame',
+            label: 'Hall of Fame',
+            icon: '⭐',
+            component: HallOfFameAdmin
+        },
+        {
+            id: 'hacknight',
+            label: 'HackNight',
+            icon: '🌙',
+            component: HackNightAdmin
+        },
+        {
+            id: 'season',
+            label: 'Season',
+            icon: '📅',
+            component: SeasonAdmin
         }
     ];
 

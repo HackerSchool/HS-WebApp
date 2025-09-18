@@ -1,6 +1,6 @@
 /* Profile Styles */
 .profile-container {
-    max-width: 900px;
+    width: 100%;
     margin: 0 auto;
     padding: 2rem;
     background: transparent;
@@ -41,6 +41,8 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
     opacity: 0.98;
     transition: opacity 0.3s ease;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .profile-card:hover {

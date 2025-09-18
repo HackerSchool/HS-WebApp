@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authAPI } from "../services/apiService";
-import { mockUserAPI } from "../services/mockDataService";
 
 const AuthContext = createContext();
 
@@ -24,17 +23,19 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = async () => {
         try {
-            const username = localStorage.getItem("username");
-            if (username) {
-                // Use mock API to get user data
-                const userData = await mockUserAPI.getUser(username);
-                setUser({
-                    username: username,
-                    ...userData,
-                });
+            // Check if user is authenticated by calling /me endpoint
+            const response = await authAPI.checkAuth();
+            if (response) {
+                setUser(response);
             }
         } catch (error) {
-            console.error("Auth check failed:", error);
+            // If we get a 401 or 404, the user is not authenticated - this is normal
+            if (error.message.includes("401") || error.message.includes("404")) {
+                console.log("User not authenticated");
+            } else {
+                console.error("Auth check failed:", error);
+            }
+            // Clear any stored auth data
             localStorage.removeItem("username");
         } finally {
             setLoading(false);
@@ -45,24 +46,23 @@ export const AuthProvider = ({ children }) => {
         try {
             setError(null);
 
-            // Simple authentication for now
-            if (username === "admin" && password === "admin") {
-                // Get user data from mock API
-                const userData = await mockUserAPI.getUser(username);
-                const mockUser = {
-                    username: username,
-                    ...userData,
-                };
-
-                localStorage.setItem("username", username);
-                setUser(mockUser);
-                return { user: mockUser };
+            console.log('Attempting login with:', username);
+            // Use real API for authentication
+            const response = await authAPI.login(username, password);
+            console.log('Login response:', response);
+            
+            if (response && response.member) {
+                setUser(response.member);
+                localStorage.setItem("username", response.member.username);
+                return { user: response.member };
             } else {
-                setError("Invalid credentials. Use admin/admin");
+                setError("Invalid credentials");
                 throw new Error("Invalid credentials");
             }
         } catch (error) {
-            if (!error.message.includes("Invalid credentials")) {
+            if (error.message.includes("Failed authentication") || error.message.includes("401")) {
+                setError("Invalid username or password");
+            } else {
                 setError(error.message);
             }
             throw error;

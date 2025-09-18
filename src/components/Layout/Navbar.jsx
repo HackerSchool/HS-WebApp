@@ -47,6 +47,12 @@ const Navbar = () => {
                             <Link to="/hall-of-fame" className="navbar-link">
                                 Hall of Fame
                             </Link>
+                            <Link to="/hacknight" className="navbar-link">
+                                HackNight
+                            </Link>
+                            <Link to="/season" className="navbar-link">
+                                Season
+                            </Link>
                             {user?.roles?.includes("admin") && (
                                 <Link
                                     to="/admin"

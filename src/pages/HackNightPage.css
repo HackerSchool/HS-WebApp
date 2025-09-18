@@ -1,0 +1,285 @@
+.hacknight-container {
+    min-height: 100vh;
+    background: transparent;
+    color: white;
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.hacknight-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4) 0%, transparent 60%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 60% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.hacknight-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+    padding: 2rem;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.hacknight-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #6dba76, #3a86ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 2rem 0;
+}
+
+.countdown-section {
+    margin-bottom: 2rem;
+}
+
+.countdown-display {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.time-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(109, 186, 118, 0.1);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    border: 2px solid rgba(109, 186, 118, 0.3);
+    min-width: 80px;
+}
+
+.time-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #6dba76;
+    line-height: 1;
+}
+
+.time-label {
+    font-size: 0.9rem;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.5rem;
+}
+
+.countdown-text {
+    font-size: 1.2rem;
+    color: #6dba76;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.confirmed-hackers {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: rgba(58, 134, 255, 0.1);
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    border: 2px solid rgba(58, 134, 255, 0.3);
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.hackers-count {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #3a86ff;
+}
+
+.hackers-label {
+    color: #ccc;
+    font-size: 1rem;
+}
+
+.hacknight-content {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.announcement-section,
+.last-winner-section,
+.final-call-section {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.9) 0%, 
+        rgba(43, 42, 40, 0.85) 25%, 
+        rgba(35, 34, 32, 0.9) 50%, 
+        rgba(50, 48, 45, 0.85) 75%, 
+        rgba(43, 42, 40, 0.9) 100%);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0.98;
+    transition: opacity 0.3s ease;
+    padding: 2rem;
+}
+
+.announcement-section:hover,
+.last-winner-section:hover,
+.final-call-section:hover {
+    opacity: 1;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    color: #6dba76;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.challenge-card {
+    text-align: center;
+}
+
+.challenge-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.challenge-status {
+    display: flex;
+    justify-content: center;
+}
+
+.status-badge {
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-badge.coming-soon {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.winner-card {
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.winner-card.empty {
+    border: 2px dashed rgba(109, 186, 118, 0.3);
+    background: rgba(109, 186, 118, 0.05);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.empty-text {
+    color: #888;
+    font-size: 1.1rem;
+    font-style: italic;
+}
+
+.final-call-section {
+    grid-column: 1 / -1;
+    text-align: center;
+}
+
+.call-to-action {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.call-title {
+    font-size: 2rem;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.call-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.join-button {
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.join-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
+@media (max-width: 768px) {
+    .hacknight-container {
+        padding: 1rem;
+    }
+    
+    .hacknight-title {
+        font-size: 2rem;
+    }
+    
+    .countdown-display {
+        gap: 1rem;
+    }
+    
+    .time-unit {
+        padding: 0.8rem 1rem;
+        min-width: 70px;
+    }
+    
+    .time-number {
+        font-size: 2rem;
+    }
+    
+    .hacknight-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .call-title {
+        font-size: 1.5rem;
+    }
+}
