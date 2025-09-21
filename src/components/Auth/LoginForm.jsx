@@ -65,7 +65,10 @@ const LoginForm = () => {
     };
 
     const handleFenixOAuth = () => {
-        window.location.href = "http://localhost:5000/fenix-auth";
+        // Redirect to Fenix OAuth with callback URL pointing directly to leaderboard
+        const callbackUrl = encodeURIComponent(`${window.location.origin}/leaderboard`);
+        const fenixAuthUrl = `http://localhost:8080/fenix-login?next=${callbackUrl}`;
+        window.location.href = fenixAuthUrl;
     };
 
     return (
