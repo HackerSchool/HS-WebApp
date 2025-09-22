@@ -1,5 +1,7 @@
 import { Fragment, useState, useEffect, useCallback } from "react";
-import { mockLeaderboardAPI } from "../../services/mockDataService";
+import { getTasks } from "../../services/taskService";
+import { getProjects } from "../../services/projectService";
+import { getMembers } from "../../services/memberService";
 import "./History.css";
 
 const History = () => {
@@ -7,6 +9,7 @@ const History = () => {
     const [teams, setTeams] = useState([]);
     const [individuals, setIndividuals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [entityType, setEntityType] = useState("teams");
@@ -19,17 +22,47 @@ const History = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [history, teamsData, individualsData] = await Promise.all([
-                mockLeaderboardAPI.getAllHistory(),
-                mockLeaderboardAPI.getTeams(),
-                mockLeaderboardAPI.getIndividuals(),
+            setError(null);
+            
+            // Buscar todas as tasks, projetos e membros
+            const [allTasks, projectsData, membersData] = await Promise.all([
+                getTasks(),
+                getProjects(),
+                getMembers()
             ]);
 
-            setHistoryData(history);
-            setTeams(teamsData);
-            setIndividuals(individualsData);
+            // Converter tasks para o formato esperado pelo componente
+            const formattedHistory = allTasks.map((task, index) => ({
+                id: task.id || index, // usar ID da task ou index como fallback
+                membro: task.username,
+                equipa: task.project_name,
+                descrição: task.description,
+                tipo: task.point_type.toUpperCase(), // PJ ou PCC
+                pontos: task.points,
+                data: task.finished_at
+            }));
+
+            // Processar projetos
+            const formattedTeams = projectsData.map(project => ({
+                ...project,
+                name: project.name || project.title,
+                id: project.id
+            }));
+
+            // Processar membros
+            const formattedIndividuals = membersData.map(member => ({
+                ...member,
+                name: member.name || `${member.firstName || ''} ${member.lastName || ''}`.trim(),
+                id: member.id
+            }));
+
+            setHistoryData(formattedHistory);
+            setTeams(formattedTeams);
+            setIndividuals(formattedIndividuals);
+            
         } catch (error) {
             console.error("Error fetching history data:", error);
+            setError("Failed to load history data. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -191,8 +224,24 @@ const History = () => {
         setCurrentPage(1);
     };
 
+    // Função para retry em caso de erro
+    const handleRetry = () => {
+        fetchData();
+    };
+
     if (loading) {
         return <div className="loading">Loading log...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="error">
+                <p>{error}</p>
+                <button onClick={handleRetry} className="retry-button">
+                    Try Again
+                </button>
+            </div>
+        );
     }
 
     return (
