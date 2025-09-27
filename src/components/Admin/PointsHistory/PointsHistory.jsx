@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { mockUserAPI } from '../../../services/mockDataService';
+import { getMembers } from '../../../services/memberService';
+import { getProjects } from '../../../services/projectService';
+import { getTasks, createTask, updateTask, deleteTask } from '../../../services/taskService';
 import Modal from '../../Modal/Modal';
 import Pagination from '../../Pagination/Pagination';
 import './PointsHistory.css';
@@ -7,6 +9,7 @@ import './PointsHistory.css';
 const PointsHistory = () => {
     const [pointsHistory, setPointsHistory] = useState([]);
     const [users, setUsers] = useState([]);
+    const [projects, setProjects] = useState([]);
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -23,7 +26,8 @@ const PointsHistory = () => {
         points: '',
         type: 'PCC',
         date: new Date().toISOString().split('T')[0],
-        selectedUsers: []
+        selectedUsers: [],
+        selectedTeam: ''
     });
 
     useEffect(() => {
@@ -33,12 +37,14 @@ const PointsHistory = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [historyData, usersData] = await Promise.all([
-                mockUserAPI.getAllPointsHistory(),
-                mockUserAPI.getAllUsers()
+            const [tasksData, usersData, projectsData] = await Promise.all([
+                getTasks(),
+                getMembers(),
+                getProjects()
             ]);
-            setPointsHistory(historyData);
+            setPointsHistory(tasksData);
             setUsers(usersData);
+            setProjects(projectsData);
             // Reset to first page when data changes
             setCurrentPage(1);
         } catch (error) {
@@ -55,7 +61,8 @@ const PointsHistory = () => {
             points: '',
             type: 'PCC',
             date: new Date().toISOString().split('T')[0],
-            selectedUsers: []
+            selectedUsers: [],
+            selectedTeam: ''
         });
         setIsCreating(true);
         setIsModalOpen(true);
@@ -64,11 +71,12 @@ const PointsHistory = () => {
 
     const handleEditEntry = (entry) => {
         setFormData({
-            description: entry.descrição || '',
-            points: entry.pontos?.toString() || '',
-            type: entry.tipo || 'PCC',
-            date: entry.data || new Date().toISOString().split('T')[0],
-            selectedUsers: [{ username: entry.membro?.toLowerCase().replace(' ', ''), name: entry.membro }]
+            description: entry.description || '',
+            points: entry.points?.toString() || '',
+            type: entry.point_type || 'PCC',
+            date: entry.finished_at ? new Date(entry.finished_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            selectedUsers: [{ username: entry.username, name: entry.username }],
+            selectedTeam: entry.project_name || ''
         });
         setSelectedEntry(entry);
         setIsCreating(false);
@@ -116,11 +124,31 @@ const PointsHistory = () => {
             };
 
             if (isCreating) {
-                await mockUserAPI.createPointsEntry(pointsData);
-                setMessage('Points awarded successfully!');
+                // Create task for selected team
+                if (!formData.selectedTeam) {
+                    setMessage('Please select a team for the task.');
+                    return;
+                }
+                
+                const selectedProject = projects.find(p => p.name === formData.selectedTeam);
+                if (!selectedProject) {
+                    setMessage('Selected team not found.');
+                    return;
+                }
+                
+                const taskData = {
+                    description: formData.description,
+                    points: parseInt(formData.points),
+                    point_type: formData.type,
+                    username: formData.selectedUsers[0]?.username,
+                    finished_at: formData.date
+                };
+                
+                await createTask(selectedProject.slug, taskData);
+                setMessage('Task created successfully!');
             } else {
-                await mockUserAPI.updatePointsEntry(selectedEntry.id, pointsData);
-                setMessage('Points entry updated successfully!');
+                await updateTask(selectedEntry.id, pointsData);
+                setMessage('Task updated successfully!');
             }
             
             await fetchData();
@@ -139,12 +167,12 @@ const PointsHistory = () => {
         }
 
         try {
-            await mockUserAPI.deletePointsEntry(entry.id);
-            setMessage('Points entry deleted successfully!');
+            await deleteTask(entry.id);
+            setMessage('Task deleted successfully!');
             await fetchData();
         } catch (error) {
-            console.error('Error deleting points entry:', error);
-            setMessage('Error deleting points entry');
+            console.error('Error deleting task:', error);
+            setMessage('Error deleting task');
         }
     };
 
@@ -169,7 +197,14 @@ const PointsHistory = () => {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('pt-PT');
+        if (!dateString) return 'No date';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Invalid date';
+            return date.toLocaleDateString('pt-PT');
+        } catch (error) {
+            return 'Invalid date';
+        }
     };
 
     if (loading) {
@@ -219,24 +254,24 @@ const PointsHistory = () => {
                                         <td>
                                             <div className="member-info">
                                                 <div className="member-avatar">
-                                                    {entry.membro?.charAt(0)?.toUpperCase() || '?'}
+                                                    {entry.username?.charAt(0)?.toUpperCase() || '?'}
                                                 </div>
-                                                <span>{entry.membro}</span>
+                                                <span>{entry.username || 'Unknown'}</span>
                                             </div>
                                         </td>
-                                        <td>{entry.equipa}</td>
-                                        <td className="description-cell">{entry.descrição}</td>
+                                        <td>{entry.project_name || 'No project'}</td>
+                                        <td className="description-cell">{entry.description || 'No description'}</td>
                                         <td>
-                                            <span className={`points-badge ${getPointsTypeClass(entry.tipo)}`}>
-                                                {entry.pontos} pts
+                                            <span className={`points-badge ${getPointsTypeClass(entry.point_type)}`}>
+                                                {entry.points || 0} pts
                                             </span>
                                         </td>
                                         <td>
-                                            <span className={`type-badge type-${entry.tipo?.toLowerCase()}`}>
-                                                {entry.tipo}
+                                            <span className={`type-badge type-${entry.point_type?.toLowerCase()}`}>
+                                                {entry.point_type || 'Unknown'}
                                             </span>
                                         </td>
-                                        <td>{formatDate(entry.data)}</td>
+                                        <td>{formatDate(entry.finished_at)}</td>
                                         <td>
                                             <div className="action-buttons">
                                                 <button 
@@ -336,28 +371,50 @@ const PointsHistory = () => {
                     </div>
 
                     {isCreating && (
-                        <div className="form-group">
-                            <label>Select Users to Receive Points *</label>
-                            <div className="users-selection">
-                                {users.map((user) => (
-                                    <div key={user.username} className="user-checkbox">
-                                        <label>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.selectedUsers.some(u => u.username === user.username)}
-                                                onChange={() => handleUserSelection(user)}
-                                                disabled={saving}
-                                            />
-                                            <span className="user-name">{user.name}</span>
-                                            <span className="user-username">({user.username})</span>
-                                        </label>
-                                    </div>
-                                ))}
+                        <>
+                            <div className="form-group">
+                                <label htmlFor="selectedTeam">Team *</label>
+                                <select
+                                    id="selectedTeam"
+                                    name="selectedTeam"
+                                    value={formData.selectedTeam}
+                                    onChange={handleChange}
+                                    required
+                                    disabled={saving}
+                                >
+                                    <option value="">Select a team</option>
+                                    {projects.map((project) => (
+                                        <option key={project.slug} value={project.name}>
+                                            {project.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                            {formData.selectedUsers.length === 0 && (
-                                <small className="form-error">Please select at least one user</small>
-                            )}
-                        </div>
+                            
+                            <div className="form-group">
+                                <label>Select User to Receive Points *</label>
+                                <div className="users-selection">
+                                    {users.map((user) => (
+                                        <div key={user.username} className="user-checkbox">
+                                            <label>
+                                                <input
+                                                    type="radio"
+                                                    name="selectedUser"
+                                                    checked={formData.selectedUsers.some(u => u.username === user.username)}
+                                                    onChange={() => handleUserSelection(user)}
+                                                    disabled={saving}
+                                                />
+                                                <span className="user-name">{user.name}</span>
+                                                <span className="user-username">({user.username})</span>
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                                {formData.selectedUsers.length === 0 && (
+                                    <small className="form-error">Please select a user</small>
+                                )}
+                            </div>
+                        </>
                     )}
 
                     {!isCreating && (

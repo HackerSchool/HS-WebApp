@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { mockUserAPI } from '../../../services/mockDataService';
+import { getMembers, createMember, updateMember, deleteMember } from '../../../services/memberService';
+import { getProjects } from '../../../services/projectService';
+import { getMemberParticipations, createParticipation, deleteParticipation } from '../../../services/projectParticipationService';
 import Modal from '../../Modal/Modal';
 import Pagination from '../../Pagination/Pagination';
 import './UserManagement.css';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
+    const [projects, setProjects] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -21,11 +24,9 @@ const UserManagement = () => {
         username: '',
         name: '',
         email: '',
-        course: '',
-        description: '',
-        istId: '',
+        ist_id: '',
         roles: [],
-        extra: ''
+        teams: []
     });
 
     useEffect(() => {
@@ -35,8 +36,27 @@ const UserManagement = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const userList = await mockUserAPI.getAllUsers();
-            setUsers(userList);
+            const [userList, projectList] = await Promise.all([
+                getMembers(),
+                getProjects()
+            ]);
+            
+            // Add teams data to each user
+            const usersWithTeams = await Promise.all(
+                userList.map(async (user) => {
+                    try {
+                        const participations = await getMemberParticipations(user.username);
+                        const userTeams = participations.map(p => p.project_name).filter(Boolean);
+                        return { ...user, teams: userTeams };
+                    } catch (error) {
+                        console.warn(`Could not fetch teams for user ${user.username}:`, error);
+                        return { ...user, teams: [] };
+                    }
+                })
+            );
+            
+            setUsers(usersWithTeams);
+            setProjects(projectList);
             // Reset to first page when data changes
             setCurrentPage(1);
         } catch (error) {
@@ -52,27 +72,34 @@ const UserManagement = () => {
             username: '',
             name: '',
             email: '',
-            course: '',
-            description: '',
-            istId: '',
+            ist_id: '',
             roles: ['member'],
-            extra: ''
+            teams: []
         });
         setIsCreating(true);
         setIsModalOpen(true);
         setMessage('');
     };
 
-    const handleEditUser = (user) => {
+    const handleEditUser = async (user) => {
+        // Get user's teams from participations
+        let userTeams = [];
+        try {
+            const participations = await getMemberParticipations(user.username);
+            if (participations && participations.length > 0) {
+                userTeams = participations.map(p => p.project_name).filter(Boolean);
+            }
+        } catch (error) {
+            console.warn('Could not fetch user participations:', error);
+        }
+
         setFormData({
             username: user.username,
             name: user.name || '',
             email: user.email || '',
-            course: user.course || '',
-            description: user.description || '',
-            istId: user.istId || '',
+            ist_id: user.ist_id || '',
             roles: user.roles || ['member'],
-            extra: user.extra || ''
+            teams: userTeams
         });
         setSelectedUser(user);
         setIsCreating(false);
@@ -97,6 +124,15 @@ const UserManagement = () => {
         }));
     };
 
+    const handleTeamsChange = (e) => {
+        const selectedOptions = Array.from(e.target.selectedOptions);
+        const selectedTeams = selectedOptions.map(option => option.value);
+        setFormData(prev => ({
+            ...prev,
+            teams: selectedTeams
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -104,10 +140,48 @@ const UserManagement = () => {
 
         try {
             if (isCreating) {
-                await mockUserAPI.createUser(formData);
+                await createMember(formData);
                 setMessage('User created successfully!');
             } else {
-                await mockUserAPI.updateUser(selectedUser.username, formData);
+                // Update user data
+                await updateMember(selectedUser.username, formData);
+                
+                // Handle team participations
+                const currentTeams = selectedUser.teams || [];
+                const newTeams = formData.teams || [];
+                
+                // Find teams to add and remove
+                const teamsToAdd = newTeams.filter(team => !currentTeams.includes(team));
+                const teamsToRemove = currentTeams.filter(team => !newTeams.includes(team));
+                
+                // Add new participations
+                for (const teamName of teamsToAdd) {
+                    const project = projects.find(p => p.name === teamName);
+                    if (project) {
+                        try {
+                            await createParticipation(project.slug, {
+                                username: selectedUser.username,
+                                join_date: new Date().toISOString().split('T')[0],
+                                roles: ['participant']
+                            });
+                        } catch (error) {
+                            console.warn(`Failed to add user to team ${teamName}:`, error);
+                        }
+                    }
+                }
+                
+                // Remove old participations
+                for (const teamName of teamsToRemove) {
+                    const project = projects.find(p => p.name === teamName);
+                    if (project) {
+                        try {
+                            await deleteParticipation(project.slug, selectedUser.username);
+                        } catch (error) {
+                            console.warn(`Failed to remove user from team ${teamName}:`, error);
+                        }
+                    }
+                }
+                
                 setMessage('User updated successfully!');
             }
             
@@ -127,7 +201,7 @@ const UserManagement = () => {
         }
 
         try {
-            await mockUserAPI.deleteUser(user.username);
+            await deleteMember(user.username);
             setMessage('User deleted successfully!');
             await fetchUsers();
         } catch (error) {
@@ -187,7 +261,7 @@ const UserManagement = () => {
                                     <th>Name</th>
                                     <th>Username</th>
                                     <th>Email</th>
-                                    <th>Course</th>
+                                    <th>Team</th>
                                     <th>Roles</th>
                                     <th>Actions</th>
                                 </tr>
@@ -205,7 +279,7 @@ const UserManagement = () => {
                                         </td>
                                         <td>{user.username}</td>
                                         <td>{user.email}</td>
-                                        <td>{user.course}</td>
+                                        <td>{user.teams ? user.teams.join(', ') : 'No teams'}</td>
                                         <td>
                                             <div className="roles">
                                                 {user.roles?.map((role, index) => (
@@ -268,12 +342,12 @@ const UserManagement = () => {
                             />
                         </div>
                         <div className="form-group">
-                            <label htmlFor="istId">IST ID *</label>
+                            <label htmlFor="ist_id">IST ID *</label>
                             <input
                                 type="text"
-                                id="istId"
-                                name="istId"
-                                value={formData.istId}
+                                id="ist_id"
+                                name="ist_id"
+                                value={formData.ist_id}
                                 onChange={handleChange}
                                 required
                                 disabled={saving}
@@ -311,22 +385,23 @@ const UserManagement = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label htmlFor="course">Course</label>
+                            <label htmlFor="teams">Teams</label>
                             <select
-                                id="course"
-                                name="course"
-                                value={formData.course}
-                                onChange={handleChange}
+                                id="teams"
+                                name="teams"
+                                value={formData.teams}
+                                onChange={handleTeamsChange}
                                 disabled={saving}
+                                multiple
+                                size="4"
                             >
-                                <option value="">Select course</option>
-                                <option value="Computer Science and Engineering">Computer Science and Engineering</option>
-                                <option value="Information Systems and Computer Engineering">Information Systems and Computer Engineering</option>
-                                <option value="Electrical and Computer Engineering">Electrical and Computer Engineering</option>
-                                <option value="Mathematics">Mathematics</option>
-                                <option value="Physics">Physics</option>
-                                <option value="Other">Other</option>
+                                {projects.map((project) => (
+                                    <option key={project.slug} value={project.name}>
+                                        {project.name}
+                                    </option>
+                                ))}
                             </select>
+                            <small className="form-help">Hold Ctrl/Cmd to select multiple teams</small>
                         </div>
                         <div className="form-group">
                             <label htmlFor="roles">Roles</label>
@@ -343,31 +418,6 @@ const UserManagement = () => {
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label htmlFor="extra">Extra Info</label>
-                        <input
-                            type="text"
-                            id="extra"
-                            name="extra"
-                            value={formData.extra}
-                            onChange={handleChange}
-                            disabled={saving}
-                            placeholder="CTF champion, Web3 expert, etc."
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="description">Description</label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            rows="4"
-                            disabled={saving}
-                            placeholder="Tell us about this user..."
-                        />
-                    </div>
 
                     <div className="form-actions">
                         <button 

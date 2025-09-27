@@ -14,23 +14,23 @@ const AdminPanel = () => {
 
     // Check if user has admin privileges
     useEffect(() => {
-        if (user && !user.roles?.includes('admin')) {
+        if (user && !user.roles?.includes('sysadmin')) {
             // Redirect non-admin users or show error
-            console.warn('Access denied: Admin privileges required');
+            console.warn('Access denied: Sysadmin privileges required');
         }
     }, [user]);
 
-    // Connect WebSocket when admin panel loads
-    useEffect(() => {
-        console.log('🔧 Admin Panel loaded - connecting WebSocket for real-time updates');
-        adminAPIService.connectWebSocket('AdminPanel');
+    // Note: WebSocket connection disabled for now as it's not needed for basic admin functionality
+    // useEffect(() => {
+    //     console.log('🔧 Admin Panel loaded - connecting WebSocket for real-time updates');
+    //     adminAPIService.connectWebSocket('AdminPanel');
 
-        // Disconnect WebSocket when admin panel unmounts
-        return () => {
-            console.log('🔧 Admin Panel unmounted - disconnecting WebSocket to save resources');
-            adminAPIService.disconnectWebSocket('AdminPanel');
-        };
-    }, []);
+    //     // Disconnect WebSocket when admin panel unmounts
+    //     return () => {
+    //         console.log('🔧 Admin Panel unmounted - disconnecting WebSocket to save resources');
+    //         adminAPIService.disconnectWebSocket('AdminPanel');
+    //     };
+    // }, []);
 
     const tabs = [
         {
@@ -78,7 +78,7 @@ const AdminPanel = () => {
         return <div className="loading">Loading...</div>;
     }
 
-    if (!user.roles?.includes('admin')) {
+    if (!user.roles?.includes('sysadmin')) {
         return (
             <div className="admin-container">
                 <div className="access-denied">

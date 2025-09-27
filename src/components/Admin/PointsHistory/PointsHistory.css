@@ -3,6 +3,32 @@
     width: 100%;
 }
 
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 0;
+}
+
+.btn-sm {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.65rem;
+    min-width: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-sm.btn-danger {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.6rem;
+}
+
+.btn-sm.btn-secondary {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.6rem;
+}
+
 .points-table-container {
     background: linear-gradient(135deg, 
         rgba(43, 42, 40, 0.4) 0%, 
@@ -239,6 +265,15 @@
     
     .action-buttons {
         flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .btn-sm {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.65rem;
+        min-width: auto;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     
     .description-cell {

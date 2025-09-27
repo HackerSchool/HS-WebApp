@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import {
-    mockUserAPI,
-    mockLeaderboardAPI,
-} from "../../services/mockDataService";
+import { getMemberByUsername, updateMember, uploadMemberImage, getMemberImage } from "../../services/memberService";
 import "./Profile.css";
 
 const UserProfile = () => {
@@ -18,8 +15,27 @@ const UserProfile = () => {
 
     const fetchUserData = useCallback(async () => {
         try {
-            const data = await mockUserAPI.getUser(user.username);
-            setProfileData(data);
+            const data = await getMemberByUsername(user.username);
+            
+            // Parse extra field for social media links
+            let extraData = {};
+            if (data.extra) {
+                try {
+                    extraData = JSON.parse(data.extra);
+                } catch (e) {
+                    console.warn("Failed to parse extra field:", e);
+                }
+            }
+            
+            // Merge social media data from extra field
+            const profileDataWithSocial = {
+                ...data,
+                linkedinUrl: extraData.linkedin || "",
+                githubUsername: extraData.github || "",
+                discordUsername: extraData.discord || ""
+            };
+            
+            setProfileData(profileDataWithSocial);
         } catch (error) {
             console.error("Error fetching user data:", error);
             setMessage("Error loading profile data");
@@ -30,18 +46,13 @@ const UserProfile = () => {
 
     const fetchUserTeams = useCallback(async () => {
         try {
-            // Fetch all teams and filter for user's teams based on profile data
-            const allTeams = await mockLeaderboardAPI.getTeams();
-            if (profileData.teams) {
-                const matchedTeams = allTeams.filter((team) =>
-                    profileData.teams.includes(team.name)
-                );
-                setUserTeams(matchedTeams);
-            }
+            // TODO: Implement project participations API call
+            // For now, set empty teams
+            setUserTeams([]);
         } catch (error) {
             console.error("Error fetching user teams:", error);
         }
-    }, [profileData.teams]);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -57,7 +68,22 @@ const UserProfile = () => {
         setMessage("");
 
         try {
-            await mockUserAPI.updateUser(user.username, profileData);
+            // Prepare data for API - move social media to extra field
+            const apiData = {
+                name: profileData.name,
+                email: profileData.email,
+                course: profileData.course,
+                ist_id: profileData.ist_id,
+                join_date: profileData.join_date,
+                description: profileData.description,
+                extra: JSON.stringify({
+                    linkedin: profileData.linkedinUrl || "",
+                    github: profileData.githubUsername || "",
+                    discord: profileData.discordUsername || ""
+                })
+            };
+
+            await updateMember(user.username, apiData);
             setMessage("Profile updated successfully!");
             setIsEditing(false);
         } catch (error) {
@@ -74,47 +100,31 @@ const UserProfile = () => {
 
         try {
             setSaving(true);
+            setMessage("");
 
-            // Convert file to base64 for localStorage storage
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const base64String = event.target.result;
-
-                // Store in localStorage
-                localStorage.setItem(`userLogo_${user.username}`, base64String);
-
-                // Set the logo URL
-                setLogoUrl(base64String);
-
-                setMessage("Logo uploaded successfully!");
-                setSaving(false);
-            };
-
-            reader.readAsDataURL(file);
+            // Upload image to API
+            await uploadMemberImage(user.username, file);
+            
+            // Refresh the image display
+            await fetchUserLogo();
+            
+            setMessage("Profile picture uploaded successfully!");
         } catch (error) {
             console.error("Error uploading logo:", error);
-            setMessage("Error uploading logo");
+            setMessage("Error uploading profile picture");
+        } finally {
             setSaving(false);
         }
     };
 
     const fetchUserLogo = useCallback(async () => {
         try {
-            // First try to get from localStorage
-            const storedLogo = localStorage.getItem(
-                `userLogo_${user.username}`
-            );
-            if (storedLogo) {
-                setLogoUrl(storedLogo);
-                return;
-            }
-
-            // Fallback to mock API if no stored logo
-            const blob = await mockUserAPI.getUserLogo(user.username);
-            const url = URL.createObjectURL(blob);
-            setLogoUrl(url);
+            const imageBlob = await getMemberImage(user.username);
+            const imageUrl = URL.createObjectURL(imageBlob);
+            setLogoUrl(imageUrl);
         } catch (error) {
             console.error("Error fetching user logo:", error);
+            setLogoUrl(null);
         }
     }, [user?.username]);
 
@@ -127,10 +137,8 @@ const UserProfile = () => {
 
     // Fetch teams when profile data changes
     useEffect(() => {
-        if (profileData.teams) {
-            fetchUserTeams();
-        }
-    }, [profileData.teams, fetchUserTeams]);
+        fetchUserTeams();
+    }, [fetchUserTeams]);
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
@@ -168,12 +176,12 @@ const UserProfile = () => {
                         {logoUrl ? (
                             <img
                                 src={logoUrl}
-                                alt="User Logo"
+                                alt="Profile"
                                 className="user-logo"
                             />
                         ) : (
                             <div className="user-logo-placeholder">
-                                <span>No Logo</span>
+                                <span>No Picture</span>
                             </div>
                         )}
                         <input
@@ -188,7 +196,7 @@ const UserProfile = () => {
                             htmlFor="logo-upload"
                             className="btn btn-secondary upload-btn"
                         >
-                            {saving ? "Uploading..." : "Upload Logo"}
+                            {saving ? "Uploading..." : "Upload Profile Picture"}
                         </label>
                     </div>
 
@@ -275,44 +283,32 @@ const UserProfile = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label htmlFor="istId">IST ID</label>
+                            <label htmlFor="ist_id">IST ID</label>
                             <input
                                 type="text"
-                                id="istId"
-                                name="istId"
-                                value={profileData.istId || ""}
+                                id="ist_id"
+                                name="ist_id"
+                                value={profileData.ist_id || ""}
                                 onChange={handleChange}
                                 disabled={!isEditing || saving}
                             />
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="joinDate">Join Date</label>
+                            <label htmlFor="join_date">Join Date</label>
                             <input
                                 type="date"
-                                id="joinDate"
-                                name="joinDate"
-                                value={profileData.joinDate || ""}
+                                id="join_date"
+                                name="join_date"
+                                value={profileData.join_date || ""}
                                 onChange={handleChange}
                                 disabled={!isEditing || saving}
                             />
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label htmlFor="extra">Extra Info</label>
-                        <input
-                            type="text"
-                            id="extra"
-                            name="extra"
-                            value={profileData.extra || ""}
-                            onChange={handleChange}
-                            disabled={!isEditing || saving}
-                            placeholder="e.g., CTF champion, Web3 expert"
-                        />
-                    </div>
 
-                    {/* Social Media Section */}
+                    {/* Social Media Section - moved to extra field */}
                     <div className="social-media-section">
                         <h4>🔗 Social Links</h4>
                         <div className="form-row">

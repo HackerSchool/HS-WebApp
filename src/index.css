@@ -25,6 +25,12 @@ code {
   flex-direction: column;
 }
 
+.app-content {
+  flex: 1;
+  padding-top: 100px; /* Space for fixed navbar */
+  transition: margin-left 0.3s ease; /* Smooth transition for sidebar push */
+}
+
 .main-content {
   flex: 1;
   padding-top: 20px;

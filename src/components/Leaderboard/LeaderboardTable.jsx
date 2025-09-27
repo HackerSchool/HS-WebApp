@@ -394,7 +394,7 @@ const LeaderboardTable = () => {
                                                     {teamHistory[team.name] ? (
                                                         <>
                                                             <div className="history-list">
-                                                                {teamHistory[team.name].map((entry, idx) => (
+                                                                {teamHistory[team.name].slice(0, 5).map((entry, idx) => (
                                                                     <div key={idx} className="history-item">
                                                                         <div className="history-info">
                                                                             <span className="member-name">{entry.membro}</span>
@@ -535,7 +535,7 @@ const LeaderboardTable = () => {
                                                     {individualHistory[individual.name] ? (
                                                         <>
                                                             <div className="history-list">
-                                                                {individualHistory[individual.name].map((entry, idx) => (
+                                                                {individualHistory[individual.name].slice(0, 5).map((entry, idx) => (
                                                                     <div key={idx} className="history-item">
                                                                         <div className="history-info">
                                                                             <span className="activity-date">{formatDate(entry.data)}</span>

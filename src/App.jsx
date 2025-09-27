@@ -86,7 +86,6 @@ function App() {
             <Router>
                 <div className="app">
                     <Navbar />
-                    <AppRoutes />
                 </div>
             </Router>
         </AuthProvider>
