@@ -29,8 +29,28 @@
         rgba(50, 48, 45, 0.4) 100%);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollbar for table */
+.users-table-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.users-table-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.users-table-container::-webkit-scrollbar-thumb {
+    background: rgba(109, 186, 118, 0.5);
+    border-radius: 4px;
+}
+
+.users-table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(109, 186, 118, 0.7);
 }
 
 .empty-state {
@@ -46,6 +66,7 @@
 
 .users-table {
     width: 100%;
+    min-width: 900px; /* Ensure horizontal scroll when needed */
     border-collapse: collapse;
     color: white;
 }
@@ -113,6 +134,11 @@
 
 .role-member {
     background: linear-gradient(135deg, #6dba76, #8bc34a);
+    color: white;
+}
+
+.role-participant {
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
 }
 

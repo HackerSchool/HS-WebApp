@@ -16,6 +16,10 @@ This noble project, first wrought by the esteemed craftsman José Lopes (known t
 
 Verily, this humble creation served as the cornerstone most foundational in the construction of the grand Hacker League project. Through great toil and scholarly pursuit, the project hath been most triumphantly transmuted from the primitive tongue of **vanilla JavaScript** unto the more refined and courtly language of **React**, thereby achieving superior maintainability and providing a most pleasant experience for all who venture forth to use it.
 
+## 🔗 Related Repositories
+
+- **[HS-API](https://github.com/HackerSchool/HS-API)** - Flask REST API backend for managing HackerSchool members and projects
+
 
 ---
 
@@ -34,6 +38,7 @@ Verily, this humble creation served as the cornerstone most foundational in the 
 ### 📊 **History Page**
 - [x] **Comprehensive Activity Log**: View all point attributions across teams and individuals
 - [x] **Advanced Filtering**: Filter by entity type (Teams/Individuals), points type (PJ/PCC), and specific entities
+- [x] **Chronological Sorting**: Automatically sorted from most recent to oldest entries
 - [x] **Pagination**: Navigate through large datasets with 10 items per page
 - [x] **Expandable Details**: Click rows to see full activity descriptions
 
@@ -52,21 +57,36 @@ Verily, this humble creation served as the cornerstone most foundational in the 
 - [x] **Role Management**: Admin and user roles with appropriate permissions
 
 ### 🛠️ **Admin Panel**
-- [ ] **User Management**: Create, edit, and delete users
-- [ ] **Search Functionality**: Find users by username
-- [ ] **Mock Data Integration**: Realistic user data for testing
-- [ ] **Form Validation**: Complete user information management
-- [ ] **Error Handling**: Proper error messages and loading states
+
+#### **User Management**
+- [x] **Complete CRUD Operations**: Create, edit, and delete users
+- [x] **Team Assignment**: Add users to multiple teams with coordinator role selection
+- [x] **Create New Teams**: Inline team creation when adding users
+- [x] **Role Management**: Assign and manage user roles (member, dev, rh, admin, sysadmin, etc.)
+- [x] **Profile Management**: Edit IST ID, name, email, and other user details
+- [x] **Pagination**: Navigate through user lists efficiently
+- [x] **Form Validation**: Complete validation with error handling
+
+#### **Points History Management**
+- [x] **Award Points**: Create point entries for team members
+- [x] **Multi-User Selection**: Award points to multiple users at once
+- [x] **Points Types**: Support for PJ (Project), PCC (Community Contribution), and PS (Special) points
+- [x] **Edit & Delete**: Modify or remove existing point entries
+- [x] **Chronological Sorting**: View entries from most recent to oldest
+- [x] **Team Integration**: Automatic team member fetching for point attribution
+- [x] **Pagination**: Navigate through large point history datasets
 
 --- 
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18 with React Router v6
+- **Backend API**: Flask REST API with SQLite database ([HS-API](https://github.com/HackerSchool/HS-API))
+- **Local Backend**: Node.js/Express server for admin operations
 - **State Management**: React Context API with hooks
 - **Styling**: CSS3 with responsive design and custom color scheme
-- **Mock API**: Simulated backend with network delays
-- **Authentication**: JWT-based with localStorage persistence
+- **Authentication**: Cookie-based session management with Fenix OAuth integration
+- **API Communication**: Axios with CORS support
 - **File Handling**: FileReader API for local image uploads
 
 ## 📁 Project Structure
@@ -74,36 +94,58 @@ Verily, this humble creation served as the cornerstone most foundational in the 
 ```
 src/
 ├── components/
-│   ├── Auth/
-│   │   ├── LoginForm.js
-│   │   ├── RegisterForm.js
-│   │   └── Auth.css
-│   ├── Layout/
-│   │   ├── Navbar.js
-│   │   └── Navbar.css
-│   ├── Profile/
-│   │   ├── UserProfile.js
-│   │   └── Profile.css
-│   ├── Leaderboard/
-│   │   ├── LeaderboardTable.js
-│   │   └── Leaderboard.css
 │   ├── Admin/
-│   │   ├── AdminPanel.js
-│   │   └── Admin.css
-│   └── PrivateRoute.js
+│   │   ├── AdminPanel.jsx
+│   │   ├── UserManagement/
+│   │   │   ├── UserManagement.jsx
+│   │   │   └── UserManagement.css
+│   │   ├── PointsHistory/
+│   │   │   ├── PointsHistory.jsx
+│   │   │   └── PointsHistory.css
+│   │   └── ContentManagement/
+│   │       ├── HallOfFameAdmin.jsx
+│   │       ├── SeasonAdmin.jsx
+│   │       └── HackNightAdmin.jsx
+│   ├── Auth/
+│   │   ├── LoginForm.jsx
+│   │   └── Auth.css
+│   ├── History/
+│   │   ├── History.jsx
+│   │   └── History.css
+│   ├── Layout/
+│   │   ├── Navbar.jsx
+│   │   └── Navbar.css
+│   ├── Leaderboard/
+│   │   ├── LeaderboardTable.jsx
+│   │   └── Leaderboard.css
+│   ├── Profile/
+│   │   ├── UserProfile.jsx
+│   │   └── Profile.css
+│   ├── HallOfFame/
+│   │   ├── HallOfFame.jsx
+│   │   └── HallOfFame.css
+│   ├── Modal/
+│   │   ├── Modal.jsx
+│   │   └── Modal.css
+│   ├── Pagination/
+│   │   ├── Pagination.jsx
+│   │   └── Pagination.css
+│   └── PrivateRoute.jsx
 ├── contexts/
-│   └── AuthContext.js
+│   └── AuthContext.jsx
 ├── pages/
-│   ├── LoginPage.js
-│   ├── RegisterPage.js
-│   ├── ProfilePage.js
-│   ├── LeaderboardPage.js
-│   ├── HistoryPage.js
-│   └── AdminPage.js
+│   ├── LeaderboardPage.jsx
+│   ├── HistoryPage.jsx
+│   ├── ProfilePage.jsx
+│   ├── HallOfFamePage.jsx
+│   └── AdminPage.jsx
 ├── services/
 │   ├── apiService.js
-│   └── mockDataService.js
-├── App.js
+│   ├── memberService.js
+│   ├── projectService.js
+│   ├── taskService.js
+│   └── projectParticipationService.js
+├── App.jsx
 └── index.js
 ```
 
@@ -113,36 +155,58 @@ src/
 
 - Node.js (v14 or higher)
 - npm or yarn
+- Python 3.11+ (for HS-API)
+- pip or uv (Python package manager)
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone the repositories**
    ```bash
+   # Clone the main web app
    git clone https://github.com/HackerSchool/Hacker-League.git
-
-   cd Hacker-League
+   cd Hacker-League/HS-WebApp
+   
+   # Clone the API (in a separate location)
+   git clone https://github.com/HackerSchool/HS-API.git
    ```
 
-2. **Install dependencies**
+2. **Setup Backend API (HS-API)**
    ```bash
+   cd HS-API
+   # Install dependencies (using uv or pip)
+   uv sync  # or: pip install -r requirements.txt
+   
+   # Run database migrations
+   flask db upgrade
+   
+   # Start the API server
+   flask run --port 8080
+   ```
+
+3. **Setup Local Backend Server**
+   ```bash
+   cd HS-WebApp/backend
    npm install
-   ```
-
-3. **Start the development server**
-   ```bash
    npm start
    ```
 
-4. **Open your browser**
-   Navigate to `http://localhost:3000`
+4. **Setup Frontend**
+   ```bash
+   cd HS-WebApp
+   npm install
+   npm start
+   ```
 
-### Test Users
+5. **Open your browser**
+   - Frontend: `http://localhost:3000`
+   - Flask API: `http://localhost:8080`
+   - Local Backend: Port varies (check backend logs)
 
-The application includes mock users for testing:
-- **admin** _(password: admin)_ - Administrator with full access 
-- **alexchen** - Team leader with member access
-- **mariasantos** - Regular member
-- **davidkim** - Team leader with member access
+### Authentication
+
+The application uses **Fenix OAuth** for authentication. Users can log in using their IST Técnico credentials.
+
+For development/testing purposes, the backend includes populated test data with various users and teams.
 
 ### Building for Production
 

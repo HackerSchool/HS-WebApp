@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getMembers } from '../../../services/memberService';
 import { getProjects } from '../../../services/projectService';
 import { getTasks, createTask, updateTask, deleteTask } from '../../../services/taskService';
+import { getParticipations } from '../../../services/projectParticipationService';
 import Modal from '../../Modal/Modal';
 import Pagination from '../../Pagination/Pagination';
 import './PointsHistory.css';
@@ -10,6 +11,7 @@ const PointsHistory = () => {
     const [pointsHistory, setPointsHistory] = useState([]);
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [teamMembers, setTeamMembers] = useState([]);
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -24,7 +26,7 @@ const PointsHistory = () => {
     const [formData, setFormData] = useState({
         description: '',
         points: '',
-        type: 'PCC',
+        type: 'pcc', // lowercase to match API enum
         date: new Date().toISOString().split('T')[0],
         selectedUsers: [],
         selectedTeam: ''
@@ -42,7 +44,20 @@ const PointsHistory = () => {
                 getMembers(),
                 getProjects()
             ]);
-            setPointsHistory(tasksData);
+            
+            // Sort tasks by date (most recent first) - using string comparison for YYYY-MM-DD format
+            const sortedTasks = [...tasksData].sort((a, b) => {
+                // Handle missing dates - put them at the end
+                if (!a.finished_at && !b.finished_at) return 0;
+                if (!a.finished_at) return 1; // a goes to end
+                if (!b.finished_at) return -1; // b goes to end
+                
+                // Since dates are in YYYY-MM-DD format, we can compare them as strings
+                // For descending order (newest first)
+                return b.finished_at.localeCompare(a.finished_at);
+            });
+            
+            setPointsHistory(sortedTasks);
             setUsers(usersData);
             setProjects(projectsData);
             // Reset to first page when data changes
@@ -59,11 +74,12 @@ const PointsHistory = () => {
         setFormData({
             description: '',
             points: '',
-            type: 'PCC',
+            type: 'pcc', // lowercase to match API enum
             date: new Date().toISOString().split('T')[0],
             selectedUsers: [],
             selectedTeam: ''
         });
+        setTeamMembers([]);
         setIsCreating(true);
         setIsModalOpen(true);
         setMessage('');
@@ -73,7 +89,7 @@ const PointsHistory = () => {
         setFormData({
             description: entry.description || '',
             points: entry.points?.toString() || '',
-            type: entry.point_type || 'PCC',
+            type: entry.point_type || 'pcc', // lowercase to match API enum
             date: entry.finished_at ? new Date(entry.finished_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             selectedUsers: [{ username: entry.username, name: entry.username }],
             selectedTeam: entry.project_name || ''
@@ -84,12 +100,38 @@ const PointsHistory = () => {
         setMessage('');
     };
 
-    const handleChange = (e) => {
+    const handleChange = async (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+        
+        // When team changes, fetch team members and reset selected users
+        if (name === 'selectedTeam') {
+            setFormData(prev => ({
+                ...prev,
+                selectedUsers: [] // Reset selected users when team changes
+            }));
+            
+            if (value) {
+                const selectedProject = projects.find(p => p.name === value);
+                if (selectedProject) {
+                    try {
+                        const participations = await getParticipations(selectedProject.slug);
+                        // Get usernames from participations and map to full user objects
+                        const memberUsernames = participations.map(p => p.username);
+                        const filteredMembers = users.filter(u => memberUsernames.includes(u.username));
+                        setTeamMembers(filteredMembers);
+                    } catch (error) {
+                        console.error('Error fetching team members:', error);
+                        setTeamMembers([]);
+                    }
+                }
+            } else {
+                setTeamMembers([]);
+            }
+        }
     };
 
     const handleUserSelection = (user) => {
@@ -118,9 +160,9 @@ const PointsHistory = () => {
             const pointsData = {
                 description: formData.description,
                 points: parseInt(formData.points),
-                type: formData.type,
-                date: formData.date,
-                members: formData.selectedUsers
+                point_type: formData.type.toLowerCase(), // API expects lowercase: pj, pcc, ps
+                finished_at: formData.date,
+                username: formData.selectedUsers[0]?.username
             };
 
             if (isCreating) {
@@ -130,32 +172,66 @@ const PointsHistory = () => {
                     return;
                 }
                 
+                if (formData.selectedUsers.length === 0) {
+                    setMessage('Please select at least one user.');
+                    return;
+                }
+                
                 const selectedProject = projects.find(p => p.name === formData.selectedTeam);
                 if (!selectedProject) {
                     setMessage('Selected team not found.');
                     return;
                 }
                 
-                const taskData = {
-                    description: formData.description,
-                    points: parseInt(formData.points),
-                    point_type: formData.type,
-                    username: formData.selectedUsers[0]?.username,
-                    finished_at: formData.date
-                };
+                const pointsValue = parseInt(formData.points, 10);
                 
-                await createTask(selectedProject.slug, taskData);
-                setMessage('Task created successfully!');
+                console.log('🔢 Points input value:', formData.points);
+                console.log('🔢 Parsed points value:', pointsValue);
+                console.log('👥 Creating tasks for', formData.selectedUsers.length, 'user(s)');
+                
+                // Create a task for each selected user
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (const user of formData.selectedUsers) {
+                    const taskData = {
+                        description: formData.description,
+                        points: pointsValue,
+                        point_type: formData.type.toLowerCase(), // API expects lowercase: pj, pcc, ps
+                        username: user.username,
+                        finished_at: formData.date
+                    };
+                    
+                    try {
+                        console.log('📤 Creating task for user:', user.username, taskData);
+                        await createTask(selectedProject.slug, taskData);
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Failed to create task for ${user.username}:`, error);
+                        failCount++;
+                    }
+                }
+                
+                if (successCount > 0) {
+                    setMessage(`Points awarded successfully to ${successCount} user(s)!${failCount > 0 ? ` (${failCount} failed)` : ''}`);
+                    await fetchData();
+                    setIsModalOpen(false);
+                } else {
+                    setMessage('Failed to award points to any user.');
+                    setSaving(false);
+                    return; // Keep modal open on complete failure
+                }
             } else {
                 await updateTask(selectedEntry.id, pointsData);
                 setMessage('Task updated successfully!');
+                await fetchData();
+                setIsModalOpen(false);
             }
-            
-            await fetchData();
-            setIsModalOpen(false);
         } catch (error) {
             console.error('Error saving points entry:', error);
-            setMessage('Error saving points entry');
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+            setMessage(`Error saving points entry: ${error.response?.data?.description || error.message}`);
         } finally {
             setSaving(false);
         }
@@ -179,6 +255,7 @@ const PointsHistory = () => {
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedEntry(null);
+        setTeamMembers([]);
         setMessage('');
     };
 
@@ -243,7 +320,6 @@ const PointsHistory = () => {
                                     <th>Team</th>
                                     <th>Description</th>
                                     <th>Points</th>
-                                    <th>Type</th>
                                     <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
@@ -261,14 +337,9 @@ const PointsHistory = () => {
                                         </td>
                                         <td>{entry.project_name || 'No project'}</td>
                                         <td className="description-cell">{entry.description || 'No description'}</td>
-                                        <td>
+                                        <td className="points-column">
                                             <span className={`points-badge ${getPointsTypeClass(entry.point_type)}`}>
-                                                {entry.points || 0} pts
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className={`type-badge type-${entry.point_type?.toLowerCase()}`}>
-                                                {entry.point_type || 'Unknown'}
+                                                {entry.points || 0} {(entry.point_type || 'PCC').toUpperCase()}
                                             </span>
                                         </td>
                                         <td>{formatDate(entry.finished_at)}</td>
@@ -333,29 +404,32 @@ const PointsHistory = () => {
                                 name="points"
                                 value={formData.points}
                                 onChange={handleChange}
+                                onWheel={(e) => e.target.blur()} // Disable scroll to change value
                                 required
                                 disabled={saving}
                                 min="0"
+                                step="1"
                                 placeholder="25"
                             />
                         </div>
                     </div>
 
                     <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="type">Points Type *</label>
-                            <select
-                                id="type"
-                                name="type"
-                                value={formData.type}
-                                onChange={handleChange}
-                                required
-                                disabled={saving}
-                            >
-                                <option value="PCC">PCC (Community Contribution)</option>
-                                <option value="PJ">PJ (Project Points)</option>
-                            </select>
-                        </div>
+                            <div className="form-group">
+                                <label htmlFor="type">Points Type *</label>
+                                <select
+                                    id="type"
+                                    name="type"
+                                    value={formData.type}
+                                    onChange={handleChange}
+                                    required
+                                    disabled={saving}
+                                >
+                                    <option value="pcc">PCC (Community Contribution)</option>
+                                    <option value="pj">PJ (Project Points)</option>
+                                    <option value="ps">PS (Special Points)</option>
+                                </select>
+                            </div>
                         <div className="form-group">
                             <label htmlFor="date">Date *</label>
                             <input
@@ -392,26 +466,37 @@ const PointsHistory = () => {
                             </div>
                             
                             <div className="form-group">
-                                <label>Select User to Receive Points *</label>
-                                <div className="users-selection">
-                                    {users.map((user) => (
-                                        <div key={user.username} className="user-checkbox">
-                                            <label>
+                                <label>Select Users to Receive Points * (can select multiple)</label>
+                                {!formData.selectedTeam ? (
+                                    <p className="form-info">Please select a team first to see available members</p>
+                                ) : teamMembers.length === 0 ? (
+                                    <p className="form-info">No members found in this team</p>
+                                ) : (
+                                    <div className="users-selection">
+                                        {teamMembers.map((user) => (
+                                            <label key={user.username} className="user-checkbox-label">
                                                 <input
-                                                    type="radio"
+                                                    type="checkbox"
                                                     name="selectedUser"
                                                     checked={formData.selectedUsers.some(u => u.username === user.username)}
                                                     onChange={() => handleUserSelection(user)}
                                                     disabled={saving}
                                                 />
-                                                <span className="user-name">{user.name}</span>
-                                                <span className="user-username">({user.username})</span>
+                                                <div className="user-info-select">
+                                                    <span className="user-name">{user.name}</span>
+                                                    <span className="user-username">@{user.username}</span>
+                                                </div>
                                             </label>
-                                        </div>
-                                    ))}
-                                </div>
-                                {formData.selectedUsers.length === 0 && (
-                                    <small className="form-error">Please select a user</small>
+                                        ))}
+                                    </div>
+                                )}
+                                {formData.selectedTeam && formData.selectedUsers.length === 0 && teamMembers.length > 0 && (
+                                    <small className="form-error">Please select at least one user</small>
+                                )}
+                                {formData.selectedUsers.length > 0 && (
+                                    <small className="form-help-success">
+                                        {formData.selectedUsers.length} user{formData.selectedUsers.length > 1 ? 's' : ''} selected
+                                    </small>
                                 )}
                             </div>
                         </>
@@ -432,7 +517,7 @@ const PointsHistory = () => {
                             className="btn btn-primary"
                             disabled={saving || (isCreating && formData.selectedUsers.length === 0)}
                         >
-                            {saving ? 'Saving...' : (isCreating ? 'Award Points' : 'Update Entry')}
+                            {saving ? 'Saving...' : (isCreating ? `Award Points${formData.selectedUsers.length > 1 ? ` to ${formData.selectedUsers.length} Users` : ''}` : 'Update Entry')}
                         </button>
                         <button 
                             type="button" 

@@ -169,12 +169,29 @@
     border-left-color: #6dba83;
 }
 
+.sidebar-link.active {
+    background: rgba(109, 186, 118, 0.15);
+    color: #6dba83;
+    border-left-color: #6dba83;
+    font-weight: 600;
+}
+
+.sidebar-link.active .sidebar-icon {
+    filter: brightness(1.2) saturate(1.5);
+}
+
 .sidebar-link.admin-link {
     color: #ffd93d;
 }
 
 .sidebar-link.admin-link:hover {
     background: rgba(255, 217, 61, 0.1);
+    border-left-color: #ffd93d;
+}
+
+.sidebar-link.admin-link.active {
+    background: rgba(255, 217, 61, 0.15);
+    color: #ffd93d;
     border-left-color: #ffd93d;
 }
 
@@ -197,19 +214,6 @@
     cursor: pointer;
 }
 
-/* Content Wrapper for Sidebar Push Effect */
-.content-wrapper {
-    margin-top: 80px; /* Space for fixed navbar */
-    transition: margin-left 0.3s ease;
-}
-
-.content-wrapper.sidebar-open {
-    margin-left: 300px; /* Push content when sidebar is open */
-}
-
-.page-content {
-    min-height: calc(100vh - 80px);
-}
 
 /* User Info */
 .user-info {

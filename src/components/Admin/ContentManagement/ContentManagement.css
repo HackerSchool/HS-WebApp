@@ -235,32 +235,23 @@ input:checked + .toggle-slider:before {
 /* Action Buttons */
 .action-buttons {
     text-align: center;
-    padding: 2rem;
-    background: linear-gradient(135deg, 
-        rgba(43, 42, 40, 0.9) 0%, 
-        rgba(43, 42, 40, 0.85) 25%, 
-        rgba(35, 34, 32, 0.9) 50%, 
-        rgba(50, 48, 45, 0.85) 75%, 
-        rgba(43, 42, 40, 0.9) 100%);
-    border-radius: 20px;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .action-buttons .btn {
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 25px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .action-buttons .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(109, 186, 118, 0.3);
 }
 
 /* Alert Styles */

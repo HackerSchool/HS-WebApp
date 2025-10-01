@@ -31,8 +31,17 @@ const History = () => {
                 getMembers()
             ]);
 
+            // Ordenar tasks por data (mais recente primeiro)
+            const sortedTasks = [...allTasks].sort((a, b) => {
+                if (!a.finished_at && !b.finished_at) return 0;
+                if (!a.finished_at) return 1;
+                if (!b.finished_at) return -1;
+                // Comparação de strings no formato YYYY-MM-DD (descending)
+                return b.finished_at.localeCompare(a.finished_at);
+            });
+
             // Converter tasks para o formato esperado pelo componente
-            const formattedHistory = allTasks.map((task, index) => ({
+            const formattedHistory = sortedTasks.map((task, index) => ({
                 id: task.id || index, // usar ID da task ou index como fallback
                 membro: task.username,
                 equipa: task.project_name,
