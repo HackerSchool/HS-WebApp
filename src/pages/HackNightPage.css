@@ -25,7 +25,7 @@
 
 .hacknight-header {
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: 2rem;
     position: relative;
     padding: 2rem;
     background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
@@ -113,15 +113,39 @@
     font-size: 1rem;
 }
 
-.hacknight-content {
+/* Last Winner - Full width below header */
+.last-winner-section {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.9) 0%, 
+        rgba(43, 42, 40, 0.85) 25%, 
+        rgba(35, 34, 32, 0.9) 50%, 
+        rgba(50, 48, 45, 0.85) 75%, 
+        rgba(43, 42, 40, 0.9) 100%);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0.98;
+    transition: opacity 0.3s ease;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.last-winner-section:hover {
+    opacity: 1;
+}
+
+/* Announcement and Photoshoot container */
+.announcement-photoshoot-container {
     display: grid;
     gap: 2rem;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 2rem;
 }
 
 .announcement-section,
-.last-winner-section,
-.final-call-section {
+.photoshoot-section {
     background: linear-gradient(135deg, 
         rgba(43, 42, 40, 0.9) 0%, 
         rgba(43, 42, 40, 0.85) 25%, 
@@ -139,7 +163,29 @@
 }
 
 .announcement-section:hover,
-.last-winner-section:hover,
+.photoshoot-section:hover {
+    opacity: 1;
+}
+
+/* Final Call - Full width */
+.final-call-section {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.9) 0%, 
+        rgba(43, 42, 40, 0.85) 25%, 
+        rgba(35, 34, 32, 0.9) 50%, 
+        rgba(50, 48, 45, 0.85) 75%, 
+        rgba(43, 42, 40, 0.9) 100%);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0.98;
+    transition: opacity 0.3s ease;
+    padding: 2rem;
+    text-align: center;
+}
+
 .final-call-section:hover {
     opacity: 1;
 }
@@ -186,13 +232,15 @@
     text-align: center;
     min-height: 200px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .winner-card.empty {
     border: 2px dashed rgba(109, 186, 118, 0.3);
     background: rgba(109, 186, 118, 0.05);
+    justify-content: center;
+    align-items: center;
 }
 
 .empty-state {
@@ -213,10 +261,6 @@
     font-style: italic;
 }
 
-.final-call-section {
-    grid-column: 1 / -1;
-    text-align: center;
-}
 
 .call-to-action {
     max-width: 600px;
@@ -253,7 +297,272 @@
     box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
 }
 
+.challenge-button {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 1rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.challenge-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
+
+/* Victorious Winner Card */
+.winner-card.victorious {
+    background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.15) 0%,
+        rgba(255, 193, 7, 0.1) 50%,
+        rgba(255, 152, 0, 0.15) 100%);
+    border: 3px solid #ffd700;
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.4),
+        0 0 60px rgba(255, 215, 0, 0.2),
+        0 20px 40px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+    padding: 2rem;
+    animation: victoryGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes victoryGlow {
+    0% {
+        box-shadow: 
+            0 0 30px rgba(255, 215, 0, 0.4),
+            0 0 60px rgba(255, 215, 0, 0.2),
+            0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    100% {
+        box-shadow: 
+            0 0 40px rgba(255, 215, 0, 0.6),
+            0 0 80px rgba(255, 215, 0, 0.3),
+            0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+}
+
+.victory-banner {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.trophy-icon {
+    font-size: 5rem;
+    animation: trophy-bounce 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+}
+
+@keyframes trophy-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+.winner-name {
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffd700, #ffed4e, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin: 1rem 0;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+.victory-ribbon {
+    display: inline-block;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 0.5rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    position: relative;
+    animation: ribbon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ribbon-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.winner-description {
+    margin-top: auto;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.winner-description p {
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 0;
+    text-align: center;
+}
+
+.celebration-effects {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sparkle {
+    position: absolute;
+    font-size: 2rem;
+    animation: sparkle-float 3s ease-in-out infinite;
+    opacity: 0.8;
+}
+
+.sparkle:nth-child(1) {
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.sparkle:nth-child(2) {
+    top: 20%;
+    right: 15%;
+    animation-delay: 0.5s;
+}
+
+.sparkle:nth-child(3) {
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 1s;
+}
+
+.sparkle:nth-child(4) {
+    bottom: 15%;
+    right: 10%;
+    animation-delay: 1.5s;
+}
+
+@keyframes sparkle-float {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translateY(-20px) rotate(180deg);
+        opacity: 1;
+    }
+}
+
+.confetti {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle, #ffd700 2px, transparent 2px),
+        radial-gradient(circle, #ff6b6b 2px, transparent 2px),
+        radial-gradient(circle, #6dba76 2px, transparent 2px),
+        radial-gradient(circle, #3a86ff 2px, transparent 2px);
+    background-size: 50px 50px, 80px 80px, 100px 100px, 60px 60px;
+    background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+    opacity: 0.15;
+    animation: confetti-fall 20s linear infinite;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100%);
+    }
+}
+
+/* Photoshoot Section - already has styles from above */
+.photoshoot-section {
+    text-align: center;
+}
+
+.photoshoot-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.camera-icon {
+    font-size: 4rem;
+    opacity: 0.7;
+    animation: camera-flash 3s ease-in-out infinite;
+}
+
+@keyframes camera-flash {
+    0%, 90%, 100% {
+        opacity: 0.7;
+    }
+    95% {
+        opacity: 1;
+        filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+    }
+}
+
+.photoshoot-message {
+    color: #ccc;
+    font-size: 1.2rem;
+    font-style: italic;
+    margin: 0;
+}
+
+.gallery-button {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.gallery-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
 @media (max-width: 768px) {
+    .announcement-photoshoot-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .winner-name {
+        font-size: 2rem;
+    }
+    
+    .trophy-icon {
+        font-size: 4rem;
+    }
+    
     .hacknight-container {
         padding: 1rem;
     }
@@ -273,10 +582,6 @@
     
     .time-number {
         font-size: 2rem;
-    }
-    
-    .hacknight-content {
-        grid-template-columns: 1fr;
     }
     
     .call-title {

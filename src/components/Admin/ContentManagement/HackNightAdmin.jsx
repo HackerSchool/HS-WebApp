@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import adminAPIService from '../../../services/adminAPIService';
+import { getProjects } from '../../../services/projectService';
 import './ContentManagement.css';
 
 const HackNightAdmin = () => {
     const [hacknightData, setHacknightData] = useState({});
+    const [teams, setTeams] = useState([]);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
@@ -27,8 +29,12 @@ const HackNightAdmin = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const data = await adminAPIService.getHackNightData();
+            const [data, projectsData] = await Promise.all([
+                adminAPIService.getHackNightData(),
+                getProjects()
+            ]);
             setHacknightData(data);
+            setTeams(projectsData);
         } catch (error) {
             setMessage('Error loading data. Please try again.');
             console.error('Error loading HackNight data:', error);
@@ -53,9 +59,11 @@ const HackNightAdmin = () => {
 
         try {
             // Save all sections
-            const sections = ['nextEvent', 'hackerChallenge', 'lastWinner', 'finalCall'];
+            const sections = ['nextEvent', 'hackerChallenge', 'lastWinner', 'finalCall', 'photoshoot'];
             for (const section of sections) {
-                await adminAPIService.updateHackNightData(section, hacknightData[section]);
+                if (hacknightData[section]) {
+                    await adminAPIService.updateHackNightData(section, hacknightData[section]);
+                }
             }
             
             setMessage('HackNight data saved successfully!');
@@ -179,6 +187,26 @@ const HackNightAdmin = () => {
                             <option value="Completed">Completed</option>
                         </select>
                     </div>
+
+                    <div className="form-group">
+                        <label>Button Text</label>
+                        <input
+                            type="text"
+                            value={hacknightData.hackerChallenge.buttonText || 'Learn More'}
+                            onChange={(e) => handleInputChange('hackerChallenge', 'buttonText', e.target.value)}
+                            placeholder="e.g., Register Now, Learn More"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Button URL</label>
+                        <input
+                            type="url"
+                            value={hacknightData.hackerChallenge.buttonUrl || ''}
+                            onChange={(e) => handleInputChange('hackerChallenge', 'buttonUrl', e.target.value)}
+                            placeholder="https://example.com/challenge"
+                        />
+                    </div>
                 </div>
 
                 {/* Last Winner Section */}
@@ -197,21 +225,34 @@ const HackNightAdmin = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Winner Name</label>
-                        <input
-                            type="text"
-                            value={hacknightData.lastWinner.name}
-                            onChange={(e) => handleInputChange('lastWinner', 'name', e.target.value)}
-                            placeholder="Winner name or leave empty for 'No winners yet'"
-                        />
+                        <label>Select Winning Team</label>
+                        <select
+                            value={hacknightData.lastWinner.teamSlug || ''}
+                            onChange={(e) => {
+                                const selectedTeam = teams.find(t => t.slug === e.target.value);
+                                handleInputChange('lastWinner', 'teamSlug', e.target.value);
+                                handleInputChange('lastWinner', 'name', selectedTeam?.name || '');
+                            }}
+                            disabled={!hacknightData.lastWinner.isActive}
+                        >
+                            <option value="">No winner yet</option>
+                            {teams.map(team => (
+                                <option key={team.slug} value={team.slug}>
+                                    {team.name}
+                                </option>
+                            ))}
+                        </select>
+                        <small className="form-help" style={{ color: '#b8c1ec', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
+                            {hacknightData.lastWinner.isActive ? 'Choose the winning team from your projects' : 'Enable to select a winner'}
+                        </small>
                     </div>
 
                     <div className="form-group">
-                        <label>Description</label>
+                        <label>Winner Description</label>
                         <textarea
                             value={hacknightData.lastWinner.description}
                             onChange={(e) => handleInputChange('lastWinner', 'description', e.target.value)}
-                            placeholder="Winner description or default message"
+                            placeholder="Amazing achievement description..."
                             rows="3"
                         />
                     </div>
@@ -250,6 +291,75 @@ const HackNightAdmin = () => {
                             placeholder="Call to action description..."
                             rows="4"
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Button Text</label>
+                        <input
+                            type="text"
+                            value={hacknightData.finalCall.buttonText || 'Join the Hunt'}
+                            onChange={(e) => handleInputChange('finalCall', 'buttonText', e.target.value)}
+                            placeholder="e.g., Join the Hunt, Register Now"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Button URL</label>
+                        <input
+                            type="url"
+                            value={hacknightData.finalCall.buttonUrl || ''}
+                            onChange={(e) => handleInputChange('finalCall', 'buttonUrl', e.target.value)}
+                            placeholder="https://example.com/register"
+                        />
+                    </div>
+                </div>
+
+                {/* Photoshoot Section */}
+                <div className="section-card">
+                    <div className="section-header">
+                        <span className="section-icon">📸</span>
+                        <h3>Last HackNight Photoshoot</h3>
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={hacknightData.photoshoot?.isActive || false}
+                                onChange={(e) => handleInputChange('photoshoot', 'isActive', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Title</label>
+                        <input
+                            type="text"
+                            value={hacknightData.photoshoot?.title || 'Last HackNight Photoshoot'}
+                            onChange={(e) => handleInputChange('photoshoot', 'title', e.target.value)}
+                            placeholder="Last HackNight Photoshoot"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Message</label>
+                        <textarea
+                            value={hacknightData.photoshoot?.message || 'Coming soon :))'}
+                            onChange={(e) => handleInputChange('photoshoot', 'message', e.target.value)}
+                            placeholder="Coming soon :))"
+                            rows="2"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Gallery URL (optional)</label>
+                        <input
+                            type="url"
+                            value={hacknightData.photoshoot?.galleryUrl || ''}
+                            onChange={(e) => handleInputChange('photoshoot', 'galleryUrl', e.target.value)}
+                            placeholder="https://photos.google.com/..."
+                        />
+                        <small className="form-help" style={{ color: '#b8c1ec', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
+                            Add a link to the photo gallery when available
+                        </small>
                     </div>
                 </div>
             </div>

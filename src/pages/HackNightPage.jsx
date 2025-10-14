@@ -101,8 +101,42 @@ const HackNightPage = () => {
                 </div>
             </div>
 
-            <div className="hacknight-content">
-                {hacknightData.hackerChallenge.isActive && (
+            {/* Last Winner Section - Right below header */}
+            <div className="last-winner-section">
+                <h2 className="section-title">🏆 Last Winner</h2>
+                {hacknightData.lastWinner?.isActive && hacknightData.lastWinner?.name ? (
+                    <div className="winner-card victorious">
+                        <div className="victory-banner">
+                            <div className="confetti"></div>
+                            <div className="trophy-icon">🏆</div>
+                            <h3 className="winner-name">{hacknightData.lastWinner.name}</h3>
+                            <div className="victory-ribbon">CHAMPION</div>
+                            <div className="celebration-effects">
+                                <span className="sparkle">✨</span>
+                                <span className="sparkle">⭐</span>
+                                <span className="sparkle">💫</span>
+                                <span className="sparkle">🌟</span>
+                            </div>
+                        </div>
+                        <div className="winner-description">
+                            <p>{hacknightData.lastWinner.description}</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="winner-card empty">
+                        <div className="empty-state">
+                            <span className="empty-icon">🎖️</span>
+                            <p className="empty-text">
+                                {hacknightData.lastWinner?.description || 'No winners yet - be the first!'}
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Announcement and Photoshoot side by side */}
+            <div className="announcement-photoshoot-container">
+                {hacknightData.hackerChallenge?.isActive && (
                     <div className="announcement-section">
                         <h2 className="section-title">🎯 {hacknightData.hackerChallenge.title}</h2>
                         <div className="challenge-card">
@@ -112,39 +146,66 @@ const HackNightPage = () => {
                             <div className="challenge-status">
                                 <span className="status-badge coming-soon">{hacknightData.hackerChallenge.status}</span>
                             </div>
+                            {hacknightData.hackerChallenge.buttonUrl && (
+                                <a 
+                                    href={hacknightData.hackerChallenge.buttonUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="btn btn-primary challenge-button"
+                                >
+                                    {hacknightData.hackerChallenge.buttonText || 'Learn More'}
+                                </a>
+                            )}
                         </div>
                     </div>
                 )}
 
-                <div className="last-winner-section">
-                    <h2 className="section-title">🏆 Last Winner</h2>
-                    <div className="winner-card empty">
-                        <div className="empty-state">
-                            <span className="empty-icon">🎖️</span>
-                            <p className="empty-text">
-                                {hacknightData.lastWinner.isActive && hacknightData.lastWinner.name 
-                                    ? `${hacknightData.lastWinner.name} - ${hacknightData.lastWinner.description}`
-                                    : hacknightData.lastWinner.description
-                                }
-                            </p>
-                        </div>
+                <div className="photoshoot-section">
+                    <h2 className="section-title">📸 {hacknightData.photoshoot?.title || 'Last HackNight Photoshoot'}</h2>
+                    <div className="photoshoot-card">
+                        <div className="camera-icon">📷</div>
+                        <p className="photoshoot-message">
+                            {hacknightData.photoshoot?.message || 'Coming soon :))'}
+                        </p>
+                        {hacknightData.photoshoot?.galleryUrl && (
+                            <a 
+                                href={hacknightData.photoshoot.galleryUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-secondary gallery-button"
+                            >
+                                View Gallery
+                            </a>
+                        )}
                     </div>
                 </div>
-
-                {hacknightData.finalCall.isActive && (
-                    <div className="final-call-section">
-                        <div className="call-to-action">
-                            <h2 className="call-title">⚡ {hacknightData.finalCall.title}</h2>
-                            <p className="call-description">
-                                {hacknightData.finalCall.description}
-                            </p>
-                            <button className="btn btn-primary join-button">
-                                Join the Hunt
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
+
+            {/* Final Call Section - Last */}
+            {hacknightData.finalCall?.isActive && (
+                <div className="final-call-section">
+                    <div className="call-to-action">
+                        <h2 className="call-title">⚡ {hacknightData.finalCall.title}</h2>
+                        <p className="call-description">
+                            {hacknightData.finalCall.description}
+                        </p>
+                        {hacknightData.finalCall.buttonUrl ? (
+                            <a 
+                                href={hacknightData.finalCall.buttonUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-primary join-button"
+                            >
+                                {hacknightData.finalCall.buttonText || 'Join the Hunt'}
+                            </a>
+                        ) : (
+                            <button className="btn btn-primary join-button" disabled>
+                                {hacknightData.finalCall.buttonText || 'Join the Hunt'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -4,6 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const WebSocket = require('ws');
 const http = require('http');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,8 +20,62 @@ const server = http.createServer(app);
 // Create WebSocket server
 const wss = new WebSocket.Server({ server });
 
-// Initialize SQLite database
-const db = new sqlite3.Database('./admin_data.db');
+// Initialize SQLite database with absolute path for consistency
+const dbPath = path.join(__dirname, 'admin_data.db');
+const backupPath = path.join(__dirname, 'admin_data_backup.json');
+const db = new sqlite3.Database(dbPath);
+
+console.log('📂 Database path:', dbPath);
+console.log('💾 Backup path:', backupPath);
+
+// Backup and restore functions
+function createBackup() {
+    db.all('SELECT * FROM admin_data', (err, rows) => {
+        if (err) {
+            console.error('❌ Error creating backup:', err);
+            return;
+        }
+        
+        const backup = {
+            timestamp: new Date().toISOString(),
+            data: rows
+        };
+        
+        fs.writeFileSync(backupPath, JSON.stringify(backup, null, 2));
+        console.log('✅ Backup created successfully');
+    });
+}
+
+function restoreFromBackup() {
+    if (!fs.existsSync(backupPath)) {
+        console.log('ℹ️  No backup file found');
+        return false;
+    }
+    
+    try {
+        const backupContent = fs.readFileSync(backupPath, 'utf8');
+        const backup = JSON.parse(backupContent);
+        
+        console.log('📥 Restoring from backup...');
+        backup.data.forEach(row => {
+            db.run(
+                'INSERT OR REPLACE INTO admin_data (data_type, data_key, data_value, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+                [row.data_type, row.data_key, row.data_value, row.created_at, row.updated_at],
+                (err) => {
+                    if (err) {
+                        console.error('❌ Error restoring row:', err);
+                    }
+                }
+            );
+        });
+        
+        console.log('✅ Data restored from backup');
+        return true;
+    } catch (error) {
+        console.error('❌ Error reading backup file:', error);
+        return false;
+    }
+}
 
 // Create tables
 db.serialize(() => {
@@ -30,8 +85,22 @@ db.serialize(() => {
         data_key TEXT NOT NULL,
         data_value TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(data_type, data_key)
+    )`, () => {
+        // Check if database is empty and restore from backup if needed
+        db.get('SELECT COUNT(*) as count FROM admin_data', (err, row) => {
+            if (!err && row.count === 0) {
+                console.log('🔍 Database is empty, checking for backup...');
+                const restored = restoreFromBackup();
+                if (!restored) {
+                    console.log('ℹ️  No backup found, initializing with default data');
+                }
+            } else {
+                console.log(`✅ Database loaded with ${row.count} records`);
+            }
+        });
+    });
 
     // Insert default data
     const defaultData = {
@@ -69,16 +138,27 @@ db.serialize(() => {
             title: 'HackerChallenge',
             description: 'Get ready for an epic coding challenge that will test your skills and creativity! The HackerChallenge is coming soon with exciting prizes and recognition for the best hackers.',
             status: 'Coming Soon',
+            buttonText: 'Learn More',
+            buttonUrl: '',
             isActive: true
         }),
         'hacknight.lastWinner': JSON.stringify({
             name: '',
+            teamSlug: '',
             description: 'No winners yet - be the first!',
             isActive: false
         }),
         'hacknight.finalCall': JSON.stringify({
             title: 'X-Biters are still on the loose!',
             description: 'Join the hunt and prove your skills in the ultimate hacking challenge. The competition is fierce, but the rewards are legendary!',
+            buttonText: 'Join the Hunt',
+            buttonUrl: '',
+            isActive: true
+        }),
+        'hacknight.photoshoot': JSON.stringify({
+            title: 'Last HackNight Photoshoot',
+            message: 'Coming soon :))',
+            galleryUrl: '',
             isActive: true
         }),
         'season.currentSeason': JSON.stringify({
@@ -103,11 +183,16 @@ db.serialize(() => {
 
     // Insert default data if not exists
     Object.entries(defaultData).forEach(([key, value]) => {
-        db.get('SELECT * FROM admin_data WHERE data_key = ?', [key], (err, row) => {
+        const [dataType, dataKey] = key.split('.');
+        db.get('SELECT * FROM admin_data WHERE data_type = ? AND data_key = ?', [dataType, dataKey], (err, row) => {
             if (!row) {
-                const [dataType, dataKey] = key.split('.');
                 db.run('INSERT INTO admin_data (data_type, data_key, data_value) VALUES (?, ?, ?)', 
-                    [dataType, dataKey, value]);
+                    [dataType, dataKey, value], (err) => {
+                        if (!err) {
+                            // Create backup after inserting default data
+                            createBackup();
+                        }
+                    });
             }
         });
     });
@@ -199,11 +284,15 @@ app.put('/api/admin-data/:type/:key', (req, res) => {
                         
                         res.json({ success: true, id: this.lastID });
                         broadcastUpdate({ type, key, data });
+                        // Create backup after successful insert
+                        createBackup();
                     }
                 );
             } else {
                 res.json({ success: true });
                 broadcastUpdate({ type, key, data });
+                // Create backup after successful update
+                createBackup();
             }
         }
     );
@@ -237,11 +326,75 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Manual backup endpoint
+app.post('/api/admin-data/backup', (req, res) => {
+    try {
+        createBackup();
+        res.json({ success: true, message: 'Backup created successfully', path: backupPath });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Restore from backup endpoint
+app.post('/api/admin-data/restore', (req, res) => {
+    try {
+        const restored = restoreFromBackup();
+        if (restored) {
+            res.json({ success: true, message: 'Data restored from backup successfully' });
+        } else {
+            res.status(404).json({ error: 'No backup file found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Clean duplicate data (run once if needed)
+app.post('/api/admin-data/clean-duplicates', (req, res) => {
+    db.all(`
+        SELECT data_type, data_key, MIN(id) as keep_id
+        FROM admin_data
+        GROUP BY data_type, data_key
+        HAVING COUNT(*) > 1
+    `, (err, duplicates) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        
+        if (duplicates.length === 0) {
+            res.json({ success: true, message: 'No duplicates found', cleaned: 0 });
+            return;
+        }
+        
+        let cleaned = 0;
+        duplicates.forEach(dup => {
+            db.run(
+                'DELETE FROM admin_data WHERE data_type = ? AND data_key = ? AND id != ?',
+                [dup.data_type, dup.data_key, dup.keep_id],
+                function(err) {
+                    if (!err) {
+                        cleaned += this.changes;
+                    }
+                }
+            );
+        });
+        
+        setTimeout(() => {
+            createBackup();
+            res.json({ success: true, message: 'Duplicates cleaned successfully', cleaned });
+        }, 1000);
+    });
+});
+
 // Start server
-server.listen(PORT, () => {
+// Listen on all network interfaces (0.0.0.0) to allow access from other devices
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📡 WebSocket server ready for real-time updates`);
     console.log(`🗄️  SQLite database initialized`);
+    console.log(`🌐 Server accessible on all network interfaces (0.0.0.0)`);
 });
 
 // Graceful shutdown

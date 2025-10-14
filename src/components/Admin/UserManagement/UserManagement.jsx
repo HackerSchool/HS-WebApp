@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { getMembers, createMember, updateMember, deleteMember } from '../../../services/memberService';
 import { getProjects, createProject } from '../../../services/projectService';
 import { getMemberParticipations, createParticipation, updateParticipation, deleteParticipation } from '../../../services/projectParticipationService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import Modal from '../../Modal/Modal';
 import Pagination from '../../Pagination/Pagination';
 import './UserManagement.css';
@@ -15,6 +17,7 @@ const UserManagement = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     
     // New team creation state
     const [showNewTeamForm, setShowNewTeamForm] = useState(false);
@@ -33,6 +36,7 @@ const UserManagement = () => {
         name: '',
         email: '',
         ist_id: '',
+        password: '', // Password for new users
         roles: [],
         rolesString: '', // Raw string for text input
         teams: [],
@@ -94,6 +98,7 @@ const UserManagement = () => {
             name: '',
             email: '',
             ist_id: '',
+            password: '',
             roles: ['member'],
             rolesString: 'member',
             teams: [],
@@ -257,14 +262,25 @@ const UserManagement = () => {
                 .filter(role => role.length > 0);
             
             // Prepare user data without teams, coordinatorTeams, rolesString, and username (teams are managed separately, username cannot be changed)
-            const { teams, coordinatorTeams, rolesString, username, ...userDataWithoutTeamsAndUsername } = formData;
+            const { teams, coordinatorTeams, rolesString, username, password, ...userDataWithoutTeamsAndUsername } = formData;
             
             // Add the processed roles array
             userDataWithoutTeamsAndUsername.roles = rolesArray;
             
             if (isCreating) {
-                // For creating, we need the username
-                const newUserData = { username, ...userDataWithoutTeamsAndUsername };
+                // For creating, we need the username and password
+                const newUserData = { 
+                    username, 
+                    password: password || undefined, // Include password if provided
+                    ...userDataWithoutTeamsAndUsername 
+                };
+                
+                // Remove ist_id if empty or doesn't match pattern
+                if (!newUserData.ist_id || !newUserData.ist_id.match(/^ist1[0-9]{5,7}$/)) {
+                    delete newUserData.ist_id;
+                }
+                
+                console.log('Creating user with data:', newUserData);
                 await createMember(newUserData);
                 setMessage('User created successfully!');
                 
@@ -385,8 +401,9 @@ const UserManagement = () => {
         } catch (error) {
             console.error('Error saving user:', error);
             console.error('Error response:', error.response?.data);
+            console.error('Error details:', error.response?.data?.details);
             console.error('Error status:', error.response?.status);
-            setMessage(`Error saving user: ${error.response?.data?.message || error.message}`);
+            setMessage(`Error saving user: ${error.response?.data?.description || error.response?.data?.message || error.message}`);
         } finally {
             setSaving(false);
         }
@@ -411,6 +428,7 @@ const UserManagement = () => {
         setIsModalOpen(false);
         setSelectedUser(null);
         setMessage('');
+        setShowPassword(false); // Reset password visibility
     };
 
     // Pagination logic
@@ -574,17 +592,20 @@ const UserManagement = () => {
                             />
                         </div>
                         <div className="form-group">
-                            <label htmlFor="ist_id">IST ID *</label>
+                            <label htmlFor="ist_id">IST ID (Optional)</label>
                             <input
                                 type="text"
                                 id="ist_id"
                                 name="ist_id"
                                 value={formData.ist_id}
                                 onChange={handleChange}
-                                required
                                 disabled={saving}
                                 placeholder="ist123456"
+                                pattern="^ist1[0-9]{5,7}$"
                             />
+                            <small className="form-help">
+                                Format: ist1 + 5-7 digits (e.g., ist123456). Leave empty if not available.
+                            </small>
                         </div>
                     </div>
 
@@ -614,6 +635,58 @@ const UserManagement = () => {
                             />
                         </div>
                     </div>
+
+                    {isCreating && (
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="password">Password (Optional)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        id="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        disabled={saving}
+                                        placeholder="Leave empty for Fenix-only login"
+                                        autoComplete="new-password"
+                                        style={{ paddingRight: '2.5rem' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        disabled={saving}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        tabIndex="-1"
+                                        style={{
+                                            position: 'absolute',
+                                            right: '0.75rem',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'rgba(255, 255, 255, 0.6)',
+                                            padding: '0.25rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            outline: 'none'
+                                        }}
+                                    >
+                                        <FontAwesomeIcon 
+                                            icon={showPassword ? faEyeSlash : faEye}
+                                            style={{ fontSize: '1rem' }}
+                                        />
+                                    </button>
+                                </div>
+                                <small className="form-help">
+                                    💡 Leave empty if user will only login via Fenix OAuth. 
+                                    Set a password to allow direct login.
+                                </small>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="form-row">
                         <div className="form-group">

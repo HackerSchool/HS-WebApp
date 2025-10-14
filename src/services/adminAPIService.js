@@ -1,9 +1,10 @@
 // API Service for Admin Data Management
 // This service handles communication with the backend server
+import { API_CONFIG } from '../config/api.config';
 
 class AdminAPIService {
     constructor() {
-        this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        this.baseURL = API_CONFIG.NODE_BACKEND_BASE_URL;
         this.ws = null;
         this.listeners = [];
         this.isConnected = false;
@@ -25,7 +26,7 @@ class AdminAPIService {
             return; // Already connected
         }
 
-        const wsURL = process.env.REACT_APP_WS_URL || 'ws://localhost:5000';
+        const wsURL = API_CONFIG.WEBSOCKET_URL;
         this.ws = new WebSocket(wsURL);
 
         this.ws.onopen = () => {

@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getMemberByUsername, updateMember, uploadMemberImage, getMemberImage } from "../../services/memberService";
+import { authAPI } from "../../services/apiService";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import "./Profile.css";
 
 const UserProfile = () => {
@@ -12,6 +15,18 @@ const UserProfile = () => {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [logoUrl, setLogoUrl] = useState(null);
+    
+    // Password change state
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordMessage, setPasswordMessage] = useState('');
 
     const fetchUserData = useCallback(async () => {
         try {
@@ -46,13 +61,22 @@ const UserProfile = () => {
 
     const fetchUserTeams = useCallback(async () => {
         try {
-            // TODO: Implement project participations API call
-            // For now, set empty teams
-            setUserTeams([]);
+            // Fetch user's participations to get their teams
+            const { getMemberParticipations } = await import('../../services/projectParticipationService');
+            const participations = await getMemberParticipations(user.username);
+            
+            // Extract team names from participations
+            const teams = participations.map(p => ({
+                name: p.project_name,
+                isCoordinator: p.roles && p.roles.includes('coordinator')
+            }));
+            
+            setUserTeams(teams);
         } catch (error) {
             console.error("Error fetching user teams:", error);
+            setUserTeams([]);
         }
-    }, []);
+    }, [user?.username]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -127,6 +151,84 @@ const UserProfile = () => {
             setLogoUrl(null);
         }
     }, [user?.username]);
+
+    const handlePasswordChange = (e) => {
+        const { name, value } = e.target;
+        setPasswordData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        setPasswordMessage('');
+
+        // Validation
+        if (!passwordData.currentPassword) {
+            setPasswordMessage('Error: Current password is required');
+            return;
+        }
+
+        if (passwordData.newPassword.length < 6) {
+            setPasswordMessage('Error: New password must be at least 6 characters');
+            return;
+        }
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordMessage('Error: New passwords do not match');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            
+            // First verify current password by attempting login
+            try {
+                await authAPI.login(user.username, passwordData.currentPassword);
+            } catch (error) {
+                setPasswordMessage('Error: Current password is incorrect');
+                setSaving(false);
+                return;
+            }
+            
+            // If current password is correct, update to new password
+            await updateMember(user.username, {
+                password: passwordData.newPassword
+            });
+
+            setPasswordMessage('Password changed successfully!');
+            setPasswordData({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+            setIsChangingPassword(false);
+            
+            // Re-login with new password to maintain session
+            setTimeout(() => {
+                setPasswordMessage('');
+            }, 3000);
+        } catch (error) {
+            console.error('Error changing password:', error);
+            setPasswordMessage(`Error changing password: ${error.response?.data?.description || error.message}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const cancelPasswordChange = () => {
+        setIsChangingPassword(false);
+        setPasswordData({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+        setPasswordMessage('');
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+    };
 
     useEffect(() => {
         if (user?.username) {
@@ -264,9 +366,10 @@ const UserProfile = () => {
                                         <span
                                             key={team.name}
                                             className="team-badge"
-                                            title={`${team.members} members`}
+                                            title={team.isCoordinator ? 'Coordinator' : 'Member'}
                                         >
                                             {team.name}
+                                            {team.isCoordinator && ' 👑'}
                                         </span>
                                     ))
                                 ) : (
@@ -431,37 +534,201 @@ const UserProfile = () => {
                     </div>
                 )}
 
-                {/* Additional Info Section */}
-                <div className="profile-additional-info">
-                    <h4>Additional Information</h4>
-                    <div className="info-grid">
-                        <div className="info-item">
-                            <span className="info-label">Member Number:</span>
-                            <span className="info-value">
-                                {profileData.memberNumber || "N/A"}
-                            </span>
-                        </div>
-                        <div className="info-item">
-                            <span className="info-label">Join Date:</span>
-                            <span className="info-value">
-                                {formatDate(profileData.joinDate)}
-                            </span>
-                        </div>
-                        <div className="info-item">
-                            <span className="info-label">IST ID:</span>
-                            <span className="info-value">
-                                {profileData.istId || "N/A"}
-                            </span>
-                        </div>
-                        <div className="info-item">
-                            <span className="info-label">Roles:</span>
-                            <span className="info-value">
-                                {profileData.roles
-                                    ? profileData.roles.join(", ")
-                                    : "N/A"}
-                            </span>
-                        </div>
+                {/* Change Password Section */}
+                <div className="profile-security-section">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h4>🔒 Security Settings</h4>
+                        {!isChangingPassword && !isEditing && (
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => setIsChangingPassword(true)}
+                                style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+                            >
+                                Change Password
+                            </button>
+                        )}
                     </div>
+
+                    {isChangingPassword && (
+                        <>
+                            {passwordMessage && (
+                                <div className={`alert ${passwordMessage.includes('Error') || passwordMessage.includes('required') || passwordMessage.includes('do not match') ? 'alert-error' : 'alert-success'}`}>
+                                    {passwordMessage}
+                                </div>
+                            )}
+                            
+                            <form onSubmit={handlePasswordSubmit} className="password-form">
+                                <div className="form-group">
+                                    <label htmlFor="currentPassword">Current Password *</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={showCurrentPassword ? "text" : "password"}
+                                            id="currentPassword"
+                                            name="currentPassword"
+                                            value={passwordData.currentPassword}
+                                            onChange={handlePasswordChange}
+                                            disabled={saving}
+                                            required
+                                            style={{ paddingRight: '2.5rem' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                            disabled={saving}
+                                            aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                                            tabIndex="-1"
+                                            style={{
+                                                position: 'absolute',
+                                                right: '0.75rem',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: 'rgba(255, 255, 255, 0.6)',
+                                                padding: '0.25rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                outline: 'none'
+                                            }}
+                                        >
+                                            <FontAwesomeIcon 
+                                                icon={showCurrentPassword ? faEyeSlash : faEye}
+                                                style={{ fontSize: '1rem' }}
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label htmlFor="newPassword">New Password *</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                type={showNewPassword ? "text" : "password"}
+                                                id="newPassword"
+                                                name="newPassword"
+                                                value={passwordData.newPassword}
+                                                onChange={handlePasswordChange}
+                                                disabled={saving}
+                                                required
+                                                minLength={6}
+                                                style={{ paddingRight: '2.5rem' }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                disabled={saving}
+                                                aria-label={showNewPassword ? "Hide password" : "Show password"}
+                                                tabIndex="-1"
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '0.75rem',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: 'rgba(255, 255, 255, 0.6)',
+                                                    padding: '0.25rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    outline: 'none'
+                                                }}
+                                            >
+                                                <FontAwesomeIcon 
+                                                    icon={showNewPassword ? faEyeSlash : faEye}
+                                                    style={{ fontSize: '1rem' }}
+                                                />
+                                            </button>
+                                        </div>
+                                        <small className="form-help">Minimum 6 characters</small>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="confirmPassword">Confirm New Password *</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                id="confirmPassword"
+                                                name="confirmPassword"
+                                                value={passwordData.confirmPassword}
+                                                onChange={handlePasswordChange}
+                                                disabled={saving}
+                                                required
+                                                minLength={6}
+                                                style={{ paddingRight: '2.5rem' }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                disabled={saving}
+                                                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                                tabIndex="-1"
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '0.75rem',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: 'rgba(255, 255, 255, 0.6)',
+                                                    padding: '0.25rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    outline: 'none'
+                                                }}
+                                            >
+                                                <FontAwesomeIcon 
+                                                    icon={showConfirmPassword ? faEyeSlash : faEye}
+                                                    style={{ fontSize: '1rem' }}
+                                                />
+                                            </button>
+                                        </div>
+                                        <small className="form-help">
+                                            {passwordData.newPassword && passwordData.confirmPassword && 
+                                             passwordData.newPassword === passwordData.confirmPassword ? (
+                                                <span style={{ color: '#6dba76' }}>✓ Passwords match</span>
+                                            ) : passwordData.confirmPassword ? (
+                                                <span style={{ color: '#e74c3c' }}>✗ Passwords do not match</span>
+                                            ) : (
+                                                'Re-enter your new password'
+                                            )}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={saving || passwordData.newPassword !== passwordData.confirmPassword}
+                                    >
+                                        {saving ? 'Changing Password...' : 'Change Password'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={cancelPasswordChange}
+                                        disabled={saving}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    )}
+
+                    {!isChangingPassword && (
+                        <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', margin: '0' }}>
+                            Keep your account secure by using a strong password.
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

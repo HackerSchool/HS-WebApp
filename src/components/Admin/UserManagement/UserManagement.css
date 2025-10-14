@@ -304,3 +304,14 @@
         flex-direction: column;
     }
 }
+
+/* Prevent browser's default password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-caps-lock-indicator {
+    display: none;
+}

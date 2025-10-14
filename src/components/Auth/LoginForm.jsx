@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { API_CONFIG } from "../../config/api.config";
 import logoFullHL from "../../assets/logo-fullHL-clean.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
@@ -67,7 +68,7 @@ const LoginForm = () => {
     const handleFenixOAuth = () => {
         // Redirect to Fenix OAuth with callback URL pointing directly to leaderboard
         const callbackUrl = encodeURIComponent(`${window.location.origin}/leaderboard`);
-        const fenixAuthUrl = `http://localhost:8080/fenix-login?next=${callbackUrl}`;
+        const fenixAuthUrl = `${API_CONFIG.FLASK_API_BASE_URL}/fenix-login?next=${callbackUrl}`;
         window.location.href = fenixAuthUrl;
     };
 

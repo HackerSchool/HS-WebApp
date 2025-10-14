@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_CONFIG } from '../config/api.config';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080', 
+  baseURL: API_CONFIG.FLASK_API_BASE_URL, 
   withCredentials: true, 
 });
 

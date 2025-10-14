@@ -1,4 +1,6 @@
-const apiBaseUrl = 'http://localhost:8080'; // Hardcoded for now
+import { API_CONFIG } from '../config/api.config';
+
+const apiBaseUrl = API_CONFIG.FLASK_API_BASE_URL;
 console.log('API Base URL:', apiBaseUrl);
 
 export async function apiRequest(endpoint, method = 'GET', body = null, includeCredentials = true) {

@@ -559,4 +559,50 @@
     margin-top: 6px;
     display: block;
     font-style: italic;
+}
+
+/* Security Settings Section */
+.profile-security-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 25px;
+    margin-top: 30px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-security-section h4 {
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6dba83, #4f7752);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.password-form {
+    margin-top: 1.5rem;
+}
+
+.password-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.password-form .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Prevent browser's default password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-caps-lock-indicator {
+    display: none;
 } 
