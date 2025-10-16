@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Backend Node.js service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hs-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - PORT=5000
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - hs-network
+
+  # Frontend React service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hs-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=https://api.hackerschool.dev
+      - REACT_APP_BACKEND_URL=http://localhost:5000/api
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - hs-network
+
+networks:
+  hs-network:
+    driver: bridge
+

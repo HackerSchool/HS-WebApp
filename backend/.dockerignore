@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.DS_Store
+admin_data.db
+admin_data_backup.json
+*.log
+
