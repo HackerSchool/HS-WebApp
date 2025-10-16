@@ -2,26 +2,27 @@
  * API Configuration - Centralized config for all API endpoints
  * 
  * OPTION 1: Edit this file directly (easier for beginners)
- *   - Change HOST below to your PC's IP (e.g., '10.212.169.150')
+ *   - Change HOST below to your domain or IP
  * 
  * OPTION 2: Use .env file (better for different environments)
  *   - Create .env file with REACT_APP_API_URL, REACT_APP_BACKEND_URL, etc.
  *   - See .env.example for template
  */
 
-// 👇 CHANGE THIS to localhost or your PC's IP for network access (e.g., '10.212.169.150')
-const HOST = '10.212.169.150';
+// Production API endpoint
+const API_HOST = 'https://api.hackerschool.dev';
 
-const FLASK_API_PORT = '8080';  // Flask API (HS-API)
+// Local backend configuration (adjust if running locally)
+const LOCAL_HOST = 'localhost';
 const NODE_BACKEND_PORT = '5000'; // Node.js backend
 
 // .env variables take priority over defaults
 export const API_CONFIG = {
-    FLASK_API_BASE_URL: process.env.REACT_APP_API_URL || `http://${HOST}:${FLASK_API_PORT}`,
-    NODE_BACKEND_BASE_URL: process.env.REACT_APP_BACKEND_URL || `http://${HOST}:${NODE_BACKEND_PORT}/api`,
-    WEBSOCKET_URL: process.env.REACT_APP_WS_URL || `ws://${HOST}:${NODE_BACKEND_PORT}`,
-    HOST,
-    FLASK_API_PORT,
+    FLASK_API_BASE_URL: process.env.REACT_APP_API_URL || API_HOST,
+    NODE_BACKEND_BASE_URL: process.env.REACT_APP_BACKEND_URL || `http://${LOCAL_HOST}:${NODE_BACKEND_PORT}/api`,
+    WEBSOCKET_URL: process.env.REACT_APP_WS_URL || `ws://${LOCAL_HOST}:${NODE_BACKEND_PORT}`,
+    HOST: API_HOST,
+    LOCAL_HOST,
     NODE_BACKEND_PORT,
 };
 
