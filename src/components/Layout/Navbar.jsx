@@ -75,7 +75,7 @@ const Navbar = () => {
                                     Season
                                 </Link>
                             </li>
-                            {user?.roles?.includes("sysadmin") && (
+                            {user?.roles?.includes("rh") && (
                                 <li>
                                     <Link 
                                         to="/admin" 

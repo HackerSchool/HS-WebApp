@@ -14,9 +14,9 @@ const AdminPanel = () => {
 
     // Check if user has admin privileges
     useEffect(() => {
-        if (user && !user.roles?.includes('sysadmin')) {
+        if (user && !user.roles?.includes('rh')) {
             // Redirect non-admin users or show error
-            console.warn('Access denied: Sysadmin privileges required');
+            console.warn('Access denied: RH privileges required');
         }
     }, [user]);
 
@@ -78,7 +78,7 @@ const AdminPanel = () => {
         return <div className="loading">Loading...</div>;
     }
 
-    if (!user.roles?.includes('sysadmin')) {
+    if (!user.roles?.includes('rh')) {
         return (
             <div className="admin-container">
                 <div className="access-denied">

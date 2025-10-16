@@ -13,7 +13,7 @@ const PrivateRoute = ({ children, requireAdmin = false }) => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (requireAdmin && (!user?.roles || !user.roles.includes("sysadmin"))) {
+    if (requireAdmin && (!user?.roles || !user.roles.includes("rh"))) {
         return <Navigate to="/" replace />;
     }
 
