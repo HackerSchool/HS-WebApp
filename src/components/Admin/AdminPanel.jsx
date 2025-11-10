@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import adminAPIService from '../../services/adminAPIService';
 import UserManagement from './UserManagement/UserManagement';
 import PointsHistory from './PointsHistory/PointsHistory';
 import HallOfFameAdmin from './ContentManagement/HallOfFameAdmin';

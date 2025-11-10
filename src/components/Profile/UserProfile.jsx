@@ -242,16 +242,6 @@ const UserProfile = () => {
         fetchUserTeams();
     }, [fetchUserTeams]);
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
-
     if (loading) {
         return <div className="loading">Loading profile...</div>;
     }

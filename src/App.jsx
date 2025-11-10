@@ -13,6 +13,7 @@ import HistoryPage from "./pages/HistoryPage";
 import HallOfFamePage from "./pages/HallOfFamePage";
 import HackNightPage from "./pages/HackNightPage";
 import SeasonPage from "./pages/SeasonPage";
+import HackNightVotingPage from "./pages/HackNightVotingPage";
 
 function AppRoutes() {
     return (
@@ -57,6 +58,14 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <HackNightPage />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/hacknight/vote"
+                element={
+                    <PrivateRoute>
+                        <HackNightVotingPage />
                     </PrivateRoute>
                 }
             />

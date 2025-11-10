@@ -4,15 +4,21 @@ import './SeasonPage.css';
 
 const SeasonPage = () => {
     const [seasonData, setSeasonData] = useState({});
+    const [hacknightExtras, setHacknightExtras] = useState({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         loadData();
-        
-        // Listen for real-time updates
+
         const unsubscribe = adminAPIService.addUpdateListener((updateData) => {
             if (updateData.type === 'season') {
                 setSeasonData(prev => ({
+                    ...prev,
+                    [updateData.key]: updateData.data
+                }));
+            }
+            if (updateData.type === 'hacknight') {
+                setHacknightExtras(prev => ({
                     ...prev,
                     [updateData.key]: updateData.data
                 }));
@@ -25,8 +31,15 @@ const SeasonPage = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const data = await adminAPIService.getSeasonData();
-            setSeasonData(data);
+            const [season, hacknight] = await Promise.all([
+                adminAPIService.getSeasonData(),
+                adminAPIService.getHackNightData()
+            ]);
+            setSeasonData(season);
+            setHacknightExtras({
+                finalCall: hacknight.finalCall,
+                hackerChallenge: hacknight.hackerChallenge
+            });
         } catch (error) {
             console.error('Error loading Season data:', error);
         } finally {
@@ -38,18 +51,67 @@ const SeasonPage = () => {
         return <div className="loading">Loading Season data...</div>;
     }
 
+    const finalCall = hacknightExtras.finalCall;
+    const hackerChallenge = hacknightExtras.hackerChallenge;
+
     return (
         <div className="season-container">
-            <div className="season-header">
-                <h1 className="season-title">{seasonData.currentSeason.title}</h1>
-                <div className="season-intro">
-                    <p className="intro-text">
-                        {seasonData.currentSeason.description}
-                    </p>
-                </div>
+            <div className="season-top-grid">
+                {finalCall?.isActive && (
+                    <div className="final-call-section">
+                        <div className="call-to-action">
+                            <h2 className="call-title">⚡ {finalCall.title}</h2>
+                            <p className="call-description">
+                                {finalCall.description}
+                            </p>
+                            {finalCall.buttonUrl ? (
+                                <a
+                                    href={finalCall.buttonUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-primary join-button"
+                                >
+                                    {finalCall.buttonText || 'Join the Hunt'}
+                                </a>
+                            ) : (
+                                <button className="btn btn-primary join-button" disabled>
+                                    {finalCall.buttonText || 'Join the Hunt'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {hackerChallenge?.isActive && (
+                    <div className="announcement-section">
+                        <h2 className="section-title">🎯 {hackerChallenge.title}</h2>
+                        <div className="challenge-card">
+                            <p className="challenge-description">
+                                {hackerChallenge.description}
+                            </p>
+                            {hackerChallenge.statusLabel && (
+                                <div className="challenge-status">
+                                    <span className={`status-badge ${hackerChallenge.status || 'coming-soon'}`}>
+                                        {hackerChallenge.statusLabel}
+                                    </span>
+                                </div>
+                            )}
+                            {hackerChallenge.buttonUrl && (
+                                <a
+                                    href={hackerChallenge.buttonUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-primary challenge-button"
+                                >
+                                    {hackerChallenge.buttonText || 'Learn More'}
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {seasonData.communityGoal.isActive && (
+            {seasonData.communityGoal?.isActive && (
                 <div className="community-goal-section">
                     <h2 className="goal-title">{seasonData.communityGoal.title}</h2>
                     <div className="goal-card">
@@ -89,8 +151,8 @@ const SeasonPage = () => {
                     <div className="stat-card">
                         <div className="stat-icon">👥</div>
                         <div className="stat-content">
-                            <div className="stat-number">{seasonData.stats.activeHackers}</div>
-                            <div className="stat-label">Active Hackers</div>
+                            <div className="stat-number">{seasonData.stats.activeParticipants}</div>
+                            <div className="stat-label">Active Participants</div>
                         </div>
                     </div>
                     
@@ -105,8 +167,8 @@ const SeasonPage = () => {
                     <div className="stat-card">
                         <div className="stat-icon">⚡</div>
                         <div className="stat-content">
-                            <div className="stat-number">{seasonData.stats.challengesSolved}</div>
-                            <div className="stat-label">Challenges Solved</div>
+                            <div className="stat-number">{seasonData.stats.tasksSolved}</div>
+                            <div className="stat-label">Tasks Solved</div>
                         </div>
                     </div>
                     

@@ -1,11 +1,12 @@
 import { Fragment, useState, useEffect, useCallback } from "react";
-import { getTasks } from "../../services/taskService";
+import { getTasks, getProjectTeamTasks } from "../../services/taskService";
 import { getProjects } from "../../services/projectService";
 import { getMembers } from "../../services/memberService";
 import "./History.css";
 
 const History = () => {
-    const [historyData, setHistoryData] = useState([]);
+    const [teamHistoryData, setTeamHistoryData] = useState([]);
+    const [memberHistoryData, setMemberHistoryData] = useState([]);
     const [teams, setTeams] = useState([]);
     const [individuals, setIndividuals] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,32 +25,66 @@ const History = () => {
             setLoading(true);
             setError(null);
             
-            // Buscar todas as tasks, projetos e membros
-            const [allTasks, projectsData, membersData] = await Promise.all([
+            // Buscar todas as tasks individuais, projetos e membros
+            const [allMemberTasks, projectsData, membersData] = await Promise.all([
                 getTasks(),
                 getProjects(),
                 getMembers()
             ]);
 
-            // Ordenar tasks por data (mais recente primeiro)
-            const sortedTasks = [...allTasks].sort((a, b) => {
+            const projectTeamTaskCollections = await Promise.all(
+                projectsData.map(async (project) => {
+                    try {
+                        const teamTasks = await getProjectTeamTasks(project.slug);
+                        return teamTasks.map((task, index) => ({
+                            id: task.id ?? `${project.slug}-team-${index}`,
+                            membro: task.contributors && task.contributors.length
+                                ? task.contributors.join(', ')
+                                : 'Team effort',
+                            equipa: project.name,
+                            descrição: task.description,
+                            tipo: (task.point_type || '').toUpperCase(),
+                            pontos: task.points,
+                            data: task.finished_at
+                        }));
+                    } catch (error) {
+                        console.error(`Error fetching team tasks for project ${project.slug}:`, error);
+                        return [];
+                    }
+                })
+            );
+
+            const flattenedTeamHistory = projectTeamTaskCollections.flat();
+
+            // Ordenar team tasks por data
+            const sortedTeamTasks = [...flattenedTeamHistory].sort((a, b) => {
+                if (!a.data && !b.data) return 0;
+                if (!a.data) return 1;
+                if (!b.data) return -1;
+                return b.data.localeCompare(a.data);
+            });
+
+            // Ordenar tasks individuais por data (mais recente primeiro)
+            const sortedMemberTasks = [...allMemberTasks].sort((a, b) => {
                 if (!a.finished_at && !b.finished_at) return 0;
                 if (!a.finished_at) return 1;
                 if (!b.finished_at) return -1;
-                // Comparação de strings no formato YYYY-MM-DD (descending)
                 return b.finished_at.localeCompare(a.finished_at);
             });
 
-            // Converter tasks para o formato esperado pelo componente
-            const formattedHistory = sortedTasks.map((task, index) => ({
-                id: task.id || index, // usar ID da task ou index como fallback
+            // Converter tasks individuais para o formato esperado
+            const formattedMemberHistory = sortedMemberTasks.map((task, index) => ({
+                id: task.id || `member-${index}`, // usar ID da task ou index como fallback
                 membro: task.username,
                 equipa: task.project_name,
                 descrição: task.description,
-                tipo: task.point_type.toUpperCase(), // PJ ou PCC
+                tipo: task.point_type ? task.point_type.toUpperCase() : '',
                 pontos: task.points,
                 data: task.finished_at
             }));
+
+            setTeamHistoryData(sortedTeamTasks);
+            setMemberHistoryData(formattedMemberHistory);
 
             // Processar projetos
             const formattedTeams = projectsData.map(project => ({
@@ -65,7 +100,6 @@ const History = () => {
                 id: member.id
             }));
 
-            setHistoryData(formattedHistory);
             setTeams(formattedTeams);
             setIndividuals(formattedIndividuals);
             
@@ -105,7 +139,8 @@ const History = () => {
     }, [showEntityDropdown]);
 
     const getFilteredData = () => {
-        let filtered = historyData;
+        const sourceData = entityType === "teams" ? teamHistoryData : memberHistoryData;
+        let filtered = sourceData;
 
         // Filter by entity
         if (entityFilter !== "all" && entityFilter !== "multiple") {

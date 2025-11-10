@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import adminAPIService from '../services/adminAPIService';
+import useHacknightStatus from '../hooks/useHacknightStatus';
 import './HackNightPage.css';
 
 const HackNightPage = () => {
@@ -11,6 +13,8 @@ const HackNightPage = () => {
         seconds: 0
     });
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+    const { status: hacknightStatus } = useHacknightStatus({ pollingInterval: 20000 });
 
     useEffect(() => {
         loadData();
@@ -62,6 +66,13 @@ const HackNightPage = () => {
         return () => clearInterval(timer);
     }, [hacknightData.nextEvent?.date, hacknightData.nextEvent?.isActive]);
 
+    const hasEventStarted = useMemo(() => {
+        if (!hacknightData.nextEvent?.date) return false;
+        return new Date(hacknightData.nextEvent.date) <= new Date();
+    }, [hacknightData.nextEvent?.date]);
+
+    const showCheckInButton = hasEventStarted && hacknightStatus?.state?.checkinsOpen;
+
     if (loading) {
         return <div className="loading">Loading HackNight data...</div>;
     }
@@ -99,6 +110,16 @@ const HackNightPage = () => {
                     <span className="hackers-count">{hacknightData.nextEvent.confirmedHackers}</span>
                     <span className="hackers-label">Confirmed Hackers (updating)</span>
                 </div>
+
+                {showCheckInButton && (
+                    <button
+                        type="button"
+                        className="hacknight-checkin-button"
+                        onClick={() => navigate('/hacknight/vote')}
+                    >
+                        Check-In
+                    </button>
+                )}
             </div>
 
             {/* Last Winner Section - Right below header */}
@@ -135,77 +156,6 @@ const HackNightPage = () => {
             </div>
 
             {/* Announcement and Photoshoot side by side */}
-            <div className="announcement-photoshoot-container">
-                {hacknightData.hackerChallenge?.isActive && (
-                    <div className="announcement-section">
-                        <h2 className="section-title">🎯 {hacknightData.hackerChallenge.title}</h2>
-                        <div className="challenge-card">
-                            <p className="challenge-description">
-                                {hacknightData.hackerChallenge.description}
-                            </p>
-                            <div className="challenge-status">
-                                <span className="status-badge coming-soon">{hacknightData.hackerChallenge.status}</span>
-                            </div>
-                            {hacknightData.hackerChallenge.buttonUrl && (
-                                <a 
-                                    href={hacknightData.hackerChallenge.buttonUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="btn btn-primary challenge-button"
-                                >
-                                    {hacknightData.hackerChallenge.buttonText || 'Learn More'}
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                <div className="photoshoot-section">
-                    <h2 className="section-title">📸 {hacknightData.photoshoot?.title || 'Last HackNight Photoshoot'}</h2>
-                    <div className="photoshoot-card">
-                        <div className="camera-icon">📷</div>
-                        <p className="photoshoot-message">
-                            {hacknightData.photoshoot?.message || 'Coming soon :))'}
-                        </p>
-                        {hacknightData.photoshoot?.galleryUrl && (
-                            <a 
-                                href={hacknightData.photoshoot.galleryUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn btn-secondary gallery-button"
-                            >
-                                View Gallery
-                            </a>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Final Call Section - Last */}
-            {hacknightData.finalCall?.isActive && (
-                <div className="final-call-section">
-                    <div className="call-to-action">
-                        <h2 className="call-title">⚡ {hacknightData.finalCall.title}</h2>
-                        <p className="call-description">
-                            {hacknightData.finalCall.description}
-                        </p>
-                        {hacknightData.finalCall.buttonUrl ? (
-                            <a 
-                                href={hacknightData.finalCall.buttonUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn btn-primary join-button"
-                            >
-                                {hacknightData.finalCall.buttonText || 'Join the Hunt'}
-                            </a>
-                        ) : (
-                            <button className="btn btn-primary join-button" disabled>
-                                {hacknightData.finalCall.buttonText || 'Join the Hunt'}
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

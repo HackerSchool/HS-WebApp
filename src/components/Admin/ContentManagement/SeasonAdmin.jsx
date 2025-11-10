@@ -63,7 +63,7 @@ const SeasonAdmin = () => {
 
         try {
             // Save all sections
-            const sections = ['currentSeason', 'communityGoal', 'stats'];
+            const sections = ['communityGoal', 'stats'];
             for (const section of sections) {
                 await adminAPIService.updateSeasonData(section, seasonData[section]);
             }
@@ -97,42 +97,6 @@ const SeasonAdmin = () => {
             )}
 
             <div className="sections-grid">
-                {/* Current Season Section */}
-                <div className="section-card full-width">
-                    <div className="section-header">
-                        <span className="section-icon">📅</span>
-                        <h3>Current Season</h3>
-                        <label className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={seasonData.currentSeason.isActive}
-                                onChange={(e) => handleInputChange('currentSeason', 'isActive', e.target.checked)}
-                            />
-                            <span className="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Season Title</label>
-                        <input
-                            type="text"
-                            value={seasonData.currentSeason.title}
-                            onChange={(e) => handleInputChange('currentSeason', 'title', e.target.value)}
-                            placeholder="e.g., Current Season"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Season Description</label>
-                        <textarea
-                            value={seasonData.currentSeason.description}
-                            onChange={(e) => handleInputChange('currentSeason', 'description', e.target.value)}
-                            placeholder="Season description..."
-                            rows="6"
-                        />
-                    </div>
-                </div>
-
                 {/* Community Goal Section */}
                 <div className="section-card">
                     <div className="section-header">
@@ -149,7 +113,6 @@ const SeasonAdmin = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Goal Title</label>
                         <input
                             type="text"
                             value={seasonData.communityGoal.title}
@@ -211,11 +174,11 @@ const SeasonAdmin = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Active Hackers</label>
+                        <label>Active Participants</label>
                             <input
                                 type="number"
-                                value={seasonData.stats.activeHackers}
-                                onChange={(e) => handleStatsChange('activeHackers', parseInt(e.target.value) || 0)}
+                                value={seasonData.stats.activeParticipants}
+                                onChange={(e) => handleStatsChange('activeParticipants', parseInt(e.target.value) || 0)}
                                 min="0"
                             />
                         </div>
@@ -233,11 +196,11 @@ const SeasonAdmin = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Challenges Solved</label>
+                        <label>Tasks Solved</label>
                             <input
                                 type="number"
-                                value={seasonData.stats.challengesSolved}
-                                onChange={(e) => handleStatsChange('challengesSolved', parseInt(e.target.value) || 0)}
+                                value={seasonData.stats.tasksSolved}
+                                onChange={(e) => handleStatsChange('tasksSolved', parseInt(e.target.value) || 0)}
                                 min="0"
                             />
                         </div>

@@ -113,6 +113,32 @@
     font-size: 1rem;
 }
 
+.hacknight-checkin-button {
+    position: absolute;
+    bottom: 2.5rem;
+    right: 2.5rem;
+    padding: 0.9rem 2.2rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+    color: #1a1a1a;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 14px 35px rgba(255, 107, 107, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hacknight-checkin-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 18px 40px rgba(255, 107, 107, 0.35);
+}
+
+.hacknight-checkin-button:active {
+    transform: translateY(0) scale(0.98);
+}
+
 /* Last Winner - Full width below header */
 .last-winner-section {
     background: linear-gradient(135deg, 
@@ -133,37 +159,6 @@
 }
 
 .last-winner-section:hover {
-    opacity: 1;
-}
-
-/* Announcement and Photoshoot container */
-.announcement-photoshoot-container {
-    display: grid;
-    gap: 2rem;
-    grid-template-columns: 1fr 1fr;
-    margin-bottom: 2rem;
-}
-
-.announcement-section,
-.photoshoot-section {
-    background: linear-gradient(135deg, 
-        rgba(43, 42, 40, 0.9) 0%, 
-        rgba(43, 42, 40, 0.85) 25%, 
-        rgba(35, 34, 32, 0.9) 50%, 
-        rgba(50, 48, 45, 0.85) 75%, 
-        rgba(43, 42, 40, 0.9) 100%);
-    border-radius: 20px;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    opacity: 0.98;
-    transition: opacity 0.3s ease;
-    padding: 2rem;
-}
-
-.announcement-section:hover,
-.photoshoot-section:hover {
     opacity: 1;
 }
 
@@ -197,35 +192,6 @@
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 1px;
-}
-
-.challenge-card {
-    text-align: center;
-}
-
-.challenge-description {
-    color: #ccc;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-}
-
-.challenge-status {
-    display: flex;
-    justify-content: center;
-}
-
-.status-badge {
-    padding: 0.5rem 1.5rem;
-    border-radius: 25px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.status-badge.coming-soon {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
 }
 
 .winner-card {
@@ -296,25 +262,6 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
 }
-
-.challenge-button {
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    margin-top: 1rem;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.3s ease;
-}
-
-.challenge-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
-}
-
 
 /* Victorious Winner Card */
 .winner-card.victorious {
@@ -498,63 +445,7 @@
     }
 }
 
-/* Photoshoot Section - already has styles from above */
-.photoshoot-section {
-    text-align: center;
-}
-
-.photoshoot-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
-
-.camera-icon {
-    font-size: 4rem;
-    opacity: 0.7;
-    animation: camera-flash 3s ease-in-out infinite;
-}
-
-@keyframes camera-flash {
-    0%, 90%, 100% {
-        opacity: 0.7;
-    }
-    95% {
-        opacity: 1;
-        filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
-    }
-}
-
-.photoshoot-message {
-    color: #ccc;
-    font-size: 1.2rem;
-    font-style: italic;
-    margin: 0;
-}
-
-.gallery-button {
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.3s ease;
-}
-
-.gallery-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
-}
-
 @media (max-width: 768px) {
-    .announcement-photoshoot-container {
-        grid-template-columns: 1fr;
-    }
-    
     .winner-name {
         font-size: 2rem;
     }
@@ -586,5 +477,11 @@
     
     .call-title {
         font-size: 1.5rem;
+    }
+
+    .hacknight-checkin-button {
+        position: static;
+        display: inline-flex;
+        margin: 1.5rem auto 0;
     }
 }

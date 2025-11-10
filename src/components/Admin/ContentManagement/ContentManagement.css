@@ -241,6 +241,49 @@ input:checked + .toggle-slider:before {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08rem;
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6dba76, #3a86ff);
+    color: #0f172a;
+    box-shadow: 0 8px 20px rgba(58, 134, 255, 0.35);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(56, 189, 248, 0.45));
+    color: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #0f172a;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(109, 186, 118, 0.28);
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 .action-buttons .btn {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
@@ -273,6 +316,49 @@ input:checked + .toggle-slider:before {
     background: rgba(220, 53, 69, 0.2);
     color: #dc3545;
     border: 2px solid rgba(220, 53, 69, 0.4);
+}
+
+.toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.button-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.btn.btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #e2e8f0;
+}
+
+.btn.btn-ghost:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+    transform: translateY(-1px);
+}
+
+.info-text {
+    margin-bottom: 1rem;
+    color: rgba(226, 232, 240, 0.8);
+    font-size: 0.95rem;
 }
 
 /* Responsive Design */
@@ -331,6 +417,58 @@ input:checked + .toggle-slider:before {
     border-radius: 5px;
     margin: 10px 0;
     border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.decision-results-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: rgba(58, 134, 255, 0.12);
+    border: 1px solid rgba(58, 134, 255, 0.28);
+    color: #dce7ff;
+    font-size: 0.95rem;
+}
+
+.decision-results-card strong {
+    color: #7dc4ff;
+    font-weight: 600;
+}
+
+.results-summary-card {
+    margin-top: 1.5rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.results-summary-card h4 {
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+    color: #9dc4ff;
+}
+
+.results-summary-card ul {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.results-summary-card li {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 10px;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.9rem;
+    color: rgba(226, 232, 240, 0.92);
 }
 
 /* Success states */

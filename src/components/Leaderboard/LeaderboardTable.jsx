@@ -1,16 +1,20 @@
-import { Fragment, useState, useEffect } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {getProjects} from '../../services/projectService';
-import {getMembers} from '../../services/memberService';
-import {getMemberTasks} from '../../services/taskService';
-import { getProjectTasks } from '../../services/taskService';
+import { getProjects } from '../../services/projectService';
+import { getMembers } from '../../services/memberService';
+import { getMemberTasks, getProjectTeamTasks } from '../../services/taskService';
 import './Leaderboard.css';
 
 const LeaderboardTable = () => {
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
     const [individuals, setIndividuals] = useState([]);
-    const [stats, setStats] = useState({});
+    const [stats, setStats] = useState({
+        totalTeams: 0,
+        totalIndividuals: 0,
+        team: { pjPoints: 0, pccPoints: 0, totalPoints: 0 },
+        individual: { pjPoints: 0, pccPoints: 0, totalPoints: 0 }
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('teams');
@@ -20,15 +24,11 @@ const LeaderboardTable = () => {
     const [teamHistory, setTeamHistory] = useState({});
     const [individualHistory, setIndividualHistory] = useState({});
 
-    useEffect(() => {
-        fetchLeaderboardData();
-    }, []);
-
     // Função helper para calcular pontos a partir das tasks
-    const calculatePointsFromTasks = (tasks) => {
+    const calculatePointsFromTasks = (tasks = []) => {
         const points = { pj: 0, pcc: 0 };
         
-        if (!tasks || !Array.isArray(tasks)) {
+        if (!Array.isArray(tasks)) {
             return points;
         }
         
@@ -43,7 +43,7 @@ const LeaderboardTable = () => {
         return points;
     };
 
-    const fetchLeaderboardData = async () => {
+    const fetchLeaderboardData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -54,11 +54,11 @@ const LeaderboardTable = () => {
                 getMembers()
             ]);
             
-            // 2. Buscar tasks para cada projeto (em paralelo)
+            // 2. Buscar team tasks para cada projeto (em paralelo)
             const projectsWithTasks = await Promise.all(
                 projectsData.map(async (project) => {
                     try {
-                        const tasks = await getProjectTasks(project.slug);
+                        const tasks = await getProjectTeamTasks(project.slug);
                         const calculatedPoints = calculatePointsFromTasks(tasks);
                         
                         return {
@@ -70,7 +70,7 @@ const LeaderboardTable = () => {
                             id: project.id
                         };
                     } catch (error) {
-                        console.error(`Error fetching tasks for project ${project.slug}:`, error);
+                        console.error(`Error fetching team tasks for project ${project.slug}:`, error);
                         // Em caso de erro, retorna projeto com 0 pontos
                         return {
                             ...project,
@@ -118,11 +118,23 @@ const LeaderboardTable = () => {
             setIndividuals(membersWithTasks);
             
             // Calcular stats baseadas nos dados reais
+            const teamTotals = projectsWithTasks.reduce((acc, project) => ({
+                pjPoints: acc.pjPoints + (project.pjPoints || 0),
+                pccPoints: acc.pccPoints + (project.pccPoints || 0),
+                totalPoints: acc.totalPoints + (project.totalPoints || 0)
+            }), { pjPoints: 0, pccPoints: 0, totalPoints: 0 });
+
+            const individualTotals = membersWithTasks.reduce((acc, member) => ({
+                pjPoints: acc.pjPoints + (member.pjPoints || 0),
+                pccPoints: acc.pccPoints + (member.pccPoints || 0),
+                totalPoints: acc.totalPoints + (member.totalPoints || 0)
+            }), { pjPoints: 0, pccPoints: 0, totalPoints: 0 });
+
             const calculatedStats = {
                 totalTeams: projectsWithTasks.length,
                 totalIndividuals: membersWithTasks.length,
-                totalPjPoints: membersWithTasks.reduce((sum, member) => sum + member.pjPoints, 0),
-                totalPccPoints: membersWithTasks.reduce((sum, member) => sum + member.pccPoints, 0)
+                team: teamTotals,
+                individual: individualTotals
             };
             
             setStats(calculatedStats);
@@ -133,7 +145,11 @@ const LeaderboardTable = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchLeaderboardData();
+    }, [fetchLeaderboardData]);
 
     // Sort data based on sortBy selection
     const getSortedData = (data) => {
@@ -164,11 +180,13 @@ const LeaderboardTable = () => {
                     // Encontrar o projeto para obter o slug
                     const project = teams.find(t => t.name === teamName);
                     if (project && project.slug) {
-                        const tasks = await getProjectTasks(project.slug);
+                        const tasks = await getProjectTeamTasks(project.slug);
                         
                         // Converter tasks para o formato do histórico
                         const history = tasks.map(task => ({
-                            membro: task.username,
+                            membro: task.contributors && task.contributors.length
+                                ? task.contributors.join(', ')
+                                : 'Team effort',
                             data: task.finished_at,
                             descrição: task.description,
                             tipo: task.point_type.toUpperCase(), // PJ ou PCC
@@ -289,8 +307,14 @@ const LeaderboardTable = () => {
                         <span className="stat-label">Teams</span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-number">{stats.totalPccPoints + stats.totalPjPoints || 0}</span>
-                        <span className="stat-label">Total Points</span>
+                        <span className="stat-number">
+                            {activeTab === 'teams'
+                                ? stats.team.totalPoints
+                                : stats.individual.totalPoints}
+                        </span>
+                        <span className="stat-label">
+                            Total {activeTab === 'teams' ? 'Team' : 'Individual'} Points
+                        </span>
                     </div>
                 </div>
             </div>

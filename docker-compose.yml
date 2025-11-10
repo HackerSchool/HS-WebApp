@@ -31,7 +31,7 @@ services:
       - .:/app
       - /app/node_modules
     environment:
-      - REACT_APP_API_URL=https://api.hackerschool.dev
+      - REACT_APP_API_URL=http://127.0.0.1:8080
       - REACT_APP_BACKEND_URL=http://localhost:5000/api
       - CHOKIDAR_USEPOLLING=true
     depends_on:

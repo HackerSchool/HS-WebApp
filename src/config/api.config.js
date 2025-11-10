@@ -10,7 +10,7 @@
  */
 
 // Production API endpoint
-const API_HOST = 'https://api.hackerschool.dev';
+const API_HOST = 'http://localhost:8080';
 
 // Local backend configuration (adjust if running locally)
 const LOCAL_HOST = 'localhost';

@@ -23,39 +23,6 @@
     z-index: -1;
 }
 
-.season-header {
-    text-align: center;
-    margin-bottom: 4rem;
-    position: relative;
-    padding: 2rem;
-    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.season-title {
-    font-size: 3.5rem;
-    font-weight: 900;
-    background: linear-gradient(135deg, #6dba76, #3a86ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 2rem 0;
-}
-
-.season-intro {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.intro-text {
-    color: #ccc;
-    line-height: 1.8;
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-    text-align: left;
-}
-
 .community-goal-section {
     margin-bottom: 3rem;
 }
@@ -214,6 +181,128 @@
     letter-spacing: 1px;
 }
 
+.season-top-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    color: #6dba76;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.announcement-section,
+.final-call-section {
+    background: linear-gradient(135deg,
+        rgba(43, 42, 40, 0.9) 0%,
+        rgba(43, 42, 40, 0.85) 25%,
+        rgba(35, 34, 32, 0.9) 50%,
+        rgba(50, 48, 45, 0.85) 75%,
+        rgba(43, 42, 40, 0.9) 100%);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0.98;
+    transition: opacity 0.3s ease;
+    padding: 2rem;
+}
+
+.announcement-section:hover,
+.final-call-section:hover {
+    opacity: 1;
+}
+
+.call-to-action {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.call-title {
+    font-size: 2rem;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.call-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.join-button {
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.join-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
+.challenge-card {
+    text-align: center;
+}
+
+.challenge-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.challenge-status {
+    display: flex;
+    justify-content: center;
+}
+
+.status-badge {
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-badge.coming-soon {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.challenge-button {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 1rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.challenge-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
 .season-stats {
     margin-top: 2rem;
 }
@@ -285,16 +374,16 @@
         padding: 1rem;
     }
     
-    .season-title {
-        font-size: 2rem;
-    }
-    
     .goal-title {
         font-size: 1.5rem;
     }
     
     .goal-card {
         padding: 2rem;
+    }
+    
+    .season-top-grid {
+        grid-template-columns: 1fr;
     }
     
     .stats-grid {
