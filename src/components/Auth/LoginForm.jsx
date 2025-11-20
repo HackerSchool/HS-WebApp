@@ -25,7 +25,10 @@ const LoginForm = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const from = location.state?.from?.pathname || "/leaderboard";
+    // Support redirect from query string (for external redirects like Vikunja)
+    // or from location.state (for internal redirects)
+    const redirectUrl = new URLSearchParams(location.search).get("redirect");
+    const from = redirectUrl || location.state?.from?.pathname || "/leaderboard";
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -57,7 +60,13 @@ const LoginForm = () => {
 
         try {
             await login(formData.username, formData.password);
-            navigate(from, { replace: true });
+            // If redirect is external (starts with http), use window.location
+            // Otherwise use React Router navigate
+            if (from.startsWith("http://") || from.startsWith("https://")) {
+                window.location.href = from;
+            } else {
+                navigate(from, { replace: true });
+            }
         } catch (error) {
             console.error("Login failed:", error);
         } finally {
@@ -66,8 +75,8 @@ const LoginForm = () => {
     };
 
     const handleFenixOAuth = () => {
-        // Redirect to Fenix OAuth with callback URL pointing directly to leaderboard
-        const callbackUrl = encodeURIComponent(`${window.location.origin}/leaderboard`);
+        // Redirect to Fenix OAuth with callback URL pointing to redirect URL or leaderboard
+        const callbackUrl = encodeURIComponent(from.startsWith("http") ? from : `${window.location.origin}${from}`);
         const fenixAuthUrl = `${API_CONFIG.FLASK_API_BASE_URL}/fenix-login?next=${callbackUrl}`;
         window.location.href = fenixAuthUrl;
     };

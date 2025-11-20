@@ -43,6 +43,39 @@ const LeaderboardTable = () => {
         return points;
     };
 
+    const safeDateToTimestamp = (value) => {
+        if (!value) {
+            return 0;
+        }
+        const direct = Date.parse(value);
+        if (!Number.isNaN(direct)) {
+            return direct;
+        }
+        const fallback = Date.parse(`${value}T00:00:00Z`);
+        return Number.isNaN(fallback) ? 0 : fallback;
+    };
+
+    const sortHistoryEntries = (entries = []) => {
+        return [...entries].sort((a, b) => {
+            const diff = safeDateToTimestamp(b.data) - safeDateToTimestamp(a.data);
+            if (diff !== 0) {
+                return diff;
+            }
+            return (b.descrição || '').localeCompare(a.descrição || '');
+        });
+    };
+
+    const formatPointsValue = (rawValue) => {
+        const numeric = Number(rawValue);
+        if (Number.isNaN(numeric)) {
+            return rawValue ?? 0;
+        }
+        if (numeric > 0) {
+            return `+${numeric}`;
+        }
+        return `${numeric}`;
+    };
+
     const fetchLeaderboardData = useCallback(async () => {
         try {
             setLoading(true);
@@ -183,7 +216,7 @@ const LeaderboardTable = () => {
                         const tasks = await getProjectTeamTasks(project.slug);
                         
                         // Converter tasks para o formato do histórico
-                        const history = tasks.map(task => ({
+                        const history = sortHistoryEntries(tasks.map(task => ({
                             membro: task.contributors && task.contributors.length
                                 ? task.contributors.join(', ')
                                 : 'Team effort',
@@ -191,8 +224,8 @@ const LeaderboardTable = () => {
                             descrição: task.description,
                             tipo: task.point_type.toUpperCase(), // PJ ou PCC
                             pontos: task.points
-                        }));
-                        
+                        })));
+
                         setTeamHistory(prev => ({
                             ...prev,
                             [teamName]: history
@@ -228,14 +261,14 @@ const LeaderboardTable = () => {
                         const tasks = await getMemberTasks(member.username);
                         
                         // Converter tasks para o formato do histórico
-                        const history = tasks.map(task => ({
+                        const history = sortHistoryEntries(tasks.map(task => ({
                             membro: task.username,
                             data: task.finished_at,
                             descrição: task.description,
                             tipo: task.point_type.toUpperCase(), // PJ ou PCC
                             pontos: task.points
-                        }));
-                        
+                        })));
+
                         setIndividualHistory(prev => ({
                             ...prev,
                             [individualName]: history
@@ -432,7 +465,7 @@ const LeaderboardTable = () => {
                                                                             >
                                                                                 {entry.tipo}
                                                                             </span>
-                                                                            <span className="point-value">+{entry.pontos}</span>
+                                                                            <span className="point-value">{formatPointsValue(entry.pontos)}</span>
                                                                         </div>
                                                                     </div>
                                                                 ))}
@@ -572,7 +605,7 @@ const LeaderboardTable = () => {
                                                                             >
                                                                                 {entry.tipo}
                                                                             </span>
-                                                                            <span className="point-value">+{entry.pontos}</span>
+                                                                            <span className="point-value">{formatPointsValue(entry.pontos)}</span>
                                                                         </div>
                                                                     </div>
                                                                 ))}

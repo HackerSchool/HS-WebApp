@@ -52,6 +52,14 @@ export const submitXadowGuessVote = async ({ voterId, teamId, eventDate }) => {
     return response.data;
 };
 
+export const togglePreCheckIn = async ({ memberId, eventDate }) => {
+    const response = await nodeApi.post('/hacknight/pre-checkin', {
+        memberId,
+        eventDate,
+    });
+    return response.data;
+};
+
 export const triggerXadowStage = async ({ stage, durationMinutes, eventDate, resetVotes }) => {
     const response = await nodeApi.post('/hacknight/xadow/trigger', {
         stage,

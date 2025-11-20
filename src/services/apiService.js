@@ -19,10 +19,20 @@ export async function apiRequest(endpoint, method = 'GET', body = null, includeC
     try {
         console.log(`Making API request to: ${apiBaseUrl}${endpoint}`);
         console.log('Request options:', options);
+        console.log('Cookies available:', document.cookie);
         const response = await fetch(`${apiBaseUrl}${endpoint}`, options);
+        
+        // Log response headers for debugging
+        console.log('Response status:', response.status);
+        console.log('Response headers:', {
+            'set-cookie': response.headers.get('set-cookie'),
+            'access-control-allow-credentials': response.headers.get('access-control-allow-credentials'),
+            'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+        });
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            console.error('API request failed:', errorData);
             throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
         }
         

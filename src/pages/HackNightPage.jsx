@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminAPIService from '../services/adminAPIService';
 import useHacknightStatus from '../hooks/useHacknightStatus';
+import { useAuth } from '../contexts/AuthContext';
+import { togglePreCheckIn } from '../services/hacknightService';
 import './HackNightPage.css';
 
 const HackNightPage = () => {
@@ -13,8 +15,11 @@ const HackNightPage = () => {
         seconds: 0
     });
     const [loading, setLoading] = useState(true);
+    const [preCheckSubmitting, setPreCheckSubmitting] = useState(false);
+    const [preCheckMessage, setPreCheckMessage] = useState(null);
     const navigate = useNavigate();
-    const { status: hacknightStatus } = useHacknightStatus({ pollingInterval: 20000 });
+    const { status: hacknightStatus, refresh: refreshHacknightStatus } = useHacknightStatus({ pollingInterval: 20000 });
+    const { user } = useAuth();
 
     useEffect(() => {
         loadData();
@@ -73,6 +78,45 @@ const HackNightPage = () => {
 
     const showCheckInButton = hasEventStarted && hacknightStatus?.state?.checkinsOpen;
 
+    const currentUserId = user?.username || localStorage.getItem('username');
+    const preCheckins = hacknightStatus?.preCheckins ?? [];
+    const preCheckCount = hacknightStatus ? preCheckins.length : (hacknightData.nextEvent?.confirmedHackers ?? 0);
+    const userPreChecked = Boolean(currentUserId && preCheckins.some((entry) => entry.memberId === currentUserId));
+
+    const handlePreCheckToggle = async () => {
+        if (!currentUserId) {
+            setPreCheckMessage('Entra na tua conta para fazer pré check-in.');
+            return;
+        }
+        setPreCheckSubmitting(true);
+        setPreCheckMessage(null);
+        try {
+            const response = await togglePreCheckIn({
+                memberId: currentUserId,
+                eventDate: hacknightStatus?.eventDate,
+            });
+            await refreshHacknightStatus();
+            if (response?.active) {
+                setPreCheckMessage('Pré check-in confirmado! 🚀');
+            } else {
+                setPreCheckMessage('Pré check-in cancelado.');
+            }
+        } catch (error) {
+            console.error('Error toggling pre check-in:', error);
+            setPreCheckMessage(error?.response?.data?.error || 'Não foi possível atualizar o pré check-in.');
+        } finally {
+            setPreCheckSubmitting(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!preCheckMessage) {
+            return;
+        }
+        const timer = setTimeout(() => setPreCheckMessage(null), 4000);
+        return () => clearTimeout(timer);
+    }, [preCheckMessage]);
+
     if (loading) {
         return <div className="loading">Loading HackNight data...</div>;
     }
@@ -107,18 +151,37 @@ const HackNightPage = () => {
                 </div>
 
                 <div className="confirmed-hackers">
-                    <span className="hackers-count">{hacknightData.nextEvent.confirmedHackers}</span>
-                    <span className="hackers-label">Confirmed Hackers (updating)</span>
+                    <span className="hackers-count">{preCheckCount}</span>
+                    <span className="hackers-label">awesome people will be there</span>
                 </div>
 
-                {showCheckInButton && (
+                <div className="hacknight-actions">
                     <button
                         type="button"
-                        className="hacknight-checkin-button"
-                        onClick={() => navigate('/hacknight/vote')}
+                        className={`hacknight-pre-checkin-button ${userPreChecked ? 'is-active' : ''}`}
+                        onClick={handlePreCheckToggle}
+                        disabled={preCheckSubmitting || !currentUserId}
                     >
-                        Check-In
+                        {!currentUserId
+                            ? 'Entrar'
+                            : preCheckSubmitting
+                                ? 'A processar...'
+                                : userPreChecked
+                                    ? 'Cancelar Pré Check-in'
+                                    : 'Pré Check-in'}
                     </button>
+                    {showCheckInButton && (
+                        <button
+                            type="button"
+                            className="hacknight-checkin-button"
+                            onClick={() => navigate('/hacknight/vote')}
+                        >
+                            Check-In
+                        </button>
+                    )}
+                </div>
+                {preCheckMessage && (
+                    <p className="precheck-message">{preCheckMessage}</p>
                 )}
             </div>
 

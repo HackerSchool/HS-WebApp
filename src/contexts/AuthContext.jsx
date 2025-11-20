@@ -16,11 +16,6 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Check if user is logged in on app start
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
     const checkAuth = async () => {
         try {
             // Check if user is authenticated by calling /me endpoint
@@ -41,6 +36,31 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         }
     };
+
+    // Check if user is logged in on app start
+    useEffect(() => {
+        checkAuth();
+    }, []);
+
+    // Check if we're returning from Fenix login callback
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const loginStatus = urlParams.get('login');
+        
+        if (loginStatus === 'success') {
+            // Remove the query params from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Check auth again after redirect to verify session cookie
+            // Give browser time to process the cookie from the redirect
+            setTimeout(() => {
+                checkAuth();
+            }, 200);
+        } else if (loginStatus === 'fail') {
+            setError('Login failed. Please try again.');
+            // Remove the query params from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, []);
 
     const login = async (username, password) => {
         try {

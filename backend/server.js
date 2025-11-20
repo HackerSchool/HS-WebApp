@@ -24,7 +24,11 @@ const wss = new WebSocket.Server({ server });
 // Initialize SQLite database with absolute path for consistency
 const dbPath = path.join(__dirname, 'admin_data.db');
 const backupPath = path.join(__dirname, 'admin_data_backup.json');
+// Use environment variable if set (for Docker), otherwise use relative path (for local dev)
+const scoreboardDbPath = process.env.SCOREBOARD_DB_PATH || path.resolve(__dirname, '../../API/resources/hackerschool.sqlite3');
 let dbOpen = false;
+let scoreboardDb = null;
+let scoreboardDbOpen = false;
 
 function openDatabase() {
     dbOpen = true;
@@ -84,6 +88,75 @@ const getAsync = (sql, params = []) => new Promise((resolve, reject) => {
 
 const allAsync = (sql, params = []) => new Promise((resolve, reject) => {
     const connection = ensureDbOpen();
+    connection.all(sql, params, (err, rows) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(rows);
+        }
+    });
+});
+
+function openScoreboardDatabase() {
+    if (!fs.existsSync(scoreboardDbPath)) {
+        console.warn(`⚠️  HackerSchool database not found at ${scoreboardDbPath}`);
+        scoreboardDbOpen = false;
+        return null;
+    }
+    const connection = new sqlite3.Database(scoreboardDbPath, sqlite3.OPEN_READWRITE, (err) => {
+        if (err) {
+            console.error('❌ Failed to open HackerSchool SQLite database', err);
+            scoreboardDbOpen = false;
+        } else {
+            scoreboardDbOpen = true;
+            console.log('✅ HackerSchool SQLite connection established');
+        }
+    });
+    connection.configure('busyTimeout', 5000);
+    return connection;
+}
+
+function ensureScoreboardDbOpen() {
+    if (scoreboardDb && scoreboardDbOpen) {
+        return scoreboardDb;
+    }
+    scoreboardDb = openScoreboardDatabase();
+    return scoreboardDb;
+}
+
+const scoreboardRunAsync = (sql, params = []) => new Promise((resolve, reject) => {
+    const connection = ensureScoreboardDbOpen();
+    if (!connection) {
+        return reject(new Error('HackerSchool database is not available'));
+    }
+    connection.run(sql, params, function(err) {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(this);
+        }
+    });
+});
+
+const scoreboardGetAsync = (sql, params = []) => new Promise((resolve, reject) => {
+    const connection = ensureScoreboardDbOpen();
+    if (!connection) {
+        return reject(new Error('HackerSchool database is not available'));
+    }
+    connection.get(sql, params, (err, row) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(row);
+        }
+    });
+});
+
+const scoreboardAllAsync = (sql, params = []) => new Promise((resolve, reject) => {
+    const connection = ensureScoreboardDbOpen();
+    if (!connection) {
+        return reject(new Error('HackerSchool database is not available'));
+    }
     connection.all(sql, params, (err, rows) => {
         if (err) {
             reject(err);
@@ -292,6 +365,15 @@ function initializeDatabase(connectionParam) {
     )`);
     connection.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_hacknight_checkins_event_member ON hacknight_checkins (event_date, member_id)`);
 
+    connection.run(`CREATE TABLE IF NOT EXISTS hacknight_pre_checkins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_date TEXT NOT NULL,
+        member_id TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(event_date, member_id)
+    )`);
+    connection.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_hacknight_pre_checkins_event_member ON hacknight_pre_checkins (event_date, member_id)`);
+
     connection.run(`CREATE TABLE IF NOT EXISTS hacknight_votes_pitch (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_date TEXT NOT NULL,
@@ -365,6 +447,17 @@ function broadcastUpdate(data) {
     });
 }
 
+const ensurePreCheckinsTable = async () => {
+    await runAsync(`CREATE TABLE IF NOT EXISTS hacknight_pre_checkins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_date TEXT NOT NULL,
+        member_id TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(event_date, member_id)
+    )`);
+    await runAsync(`CREATE UNIQUE INDEX IF NOT EXISTS idx_hacknight_pre_checkins_event_member ON hacknight_pre_checkins (event_date, member_id)`);
+};
+
 // API Routes
 
 // HackNight helpers and routes
@@ -435,7 +528,9 @@ const getCurrentEventDate = async () => {
 };
 
 const clearHacknightData = async (eventDate) => {
+    await ensurePreCheckinsTable();
     await runAsync('DELETE FROM hacknight_checkins WHERE event_date = ?', [eventDate]);
+    await runAsync('DELETE FROM hacknight_pre_checkins WHERE event_date = ?', [eventDate]);
     await runAsync('DELETE FROM hacknight_votes_pitch WHERE event_date = ?', [eventDate]);
     await runAsync('DELETE FROM hacknight_votes_challenge WHERE event_date = ?', [eventDate]);
     await runAsync('DELETE FROM hacknight_votes_xadow WHERE event_date = ?', [eventDate]);
@@ -482,7 +577,87 @@ const computeGuessResults = (votes) => {
     };
 };
 
+const applyXadowPenalty = async ({ eventDate, penaltyPoints = -10 }) => {
+    if (!ensureScoreboardDbOpen()) {
+        throw new Error('HackerSchool database is not available');
+    }
+
+    const eventDay = (eventDate || new Date().toISOString()).slice(0, 10);
+    const penaltyDescription = `Penalização xad0w.b1ts (${eventDay})`;
+
+    await scoreboardRunAsync('BEGIN IMMEDIATE');
+
+    const summary = {
+        appliedCount: 0,
+        skippedCount: 0,
+        appliedSample: [],
+        skippedSample: [],
+        description: penaltyDescription,
+        pointType: 'PJ',
+        points: penaltyPoints,
+        finishedAt: eventDay,
+    };
+
+    try {
+        const members = await scoreboardAllAsync('SELECT id, username FROM members');
+        const participations = await scoreboardAllAsync(
+            'SELECT id, member_id, join_date FROM project_participations ORDER BY join_date ASC'
+        );
+        const participationByMember = new Map();
+        participations.forEach((row) => {
+            if (!participationByMember.has(row.member_id)) {
+                participationByMember.set(row.member_id, row.id);
+            }
+        });
+
+        for (const member of members) {
+            const participationId = participationByMember.get(member.id);
+            if (!participationId) {
+                summary.skippedCount += 1;
+                if (summary.skippedSample.length < 5) {
+                    summary.skippedSample.push(member.username);
+                }
+                continue;
+            }
+
+            const existing = await scoreboardGetAsync(
+                'SELECT id FROM tasks WHERE participation_id = ? AND description = ?',
+                [participationId, penaltyDescription]
+            );
+            if (existing) {
+                continue;
+            }
+
+            await scoreboardRunAsync(
+                'INSERT INTO tasks (point_type, points, description, finished_at, participation_id) VALUES (?, ?, ?, ?, ?)',
+                ['PJ', penaltyPoints, penaltyDescription, eventDay, participationId]
+            );
+
+            summary.appliedCount += 1;
+            if (summary.appliedSample.length < 5) {
+                summary.appliedSample.push(member.username);
+            }
+        }
+
+        await scoreboardRunAsync('COMMIT');
+
+        console.log(
+            `🚨 Applied xad0w.b1ts penalty of ${penaltyPoints} PJ to ${summary.appliedCount} members (skipped: ${summary.skippedCount})`
+        );
+
+        return summary;
+    } catch (error) {
+        try {
+            await scoreboardRunAsync('ROLLBACK');
+        } catch (rollbackError) {
+            console.error('Error rolling back xad0w.b1ts penalty transaction', rollbackError);
+        }
+        throw error;
+    }
+};
+
 const synchronizeXadowState = async (eventDate) => {
+    await ensurePreCheckinsTable();
     const now = new Date();
     let state = await getHacknightState();
     let stateUpdated = false;
@@ -513,13 +688,59 @@ const synchronizeXadowState = async (eventDate) => {
         );
         const guessResultsData = computeGuessResults(guessVotes);
         const targetTeam = state.xadowTargetTeam || null;
-        const playersCaught = Boolean(guessResultsData.leadingTeam && targetTeam && guessResultsData.leadingTeam === targetTeam);
+        const checkins = await allAsync(
+            'SELECT member_id FROM hacknight_checkins WHERE event_date = ?',
+            [eventDate]
+        );
+        const eligibleCount = checkins.length;
+        const voteCount = guessVotes.length;
+        const requiredVotes = eligibleCount === 0 ? 0 : Math.max(1, Math.floor(eligibleCount * 0.8));
+        const hasEnoughVotes = eligibleCount > 0 && voteCount >= requiredVotes;
+
+        const playersCaught = Boolean(
+            hasEnoughVotes &&
+            guessResultsData.leadingTeam &&
+            targetTeam &&
+            guessResultsData.leadingTeam === targetTeam
+        );
+
+        const previousGuessResults = state.guessResults || {};
+        let penaltyApplied = Boolean(previousGuessResults.penaltyApplied);
+        let penaltySummary = previousGuessResults.penalty || null;
+        let penaltyError = null;
+
+        if (hasEnoughVotes && !playersCaught) {
+            if (!penaltyApplied) {
+                try {
+                    penaltySummary = await applyXadowPenalty({ eventDate });
+                    penaltyApplied = true;
+                } catch (error) {
+                    penaltyApplied = false;
+                    penaltySummary = null;
+                    penaltyError = error.message || 'Falha ao aplicar penalização xad0w.b1ts';
+                    console.error('Error applying xad0w.b1ts penalty', error);
+                }
+            }
+        } else {
+            penaltyApplied = false;
+            penaltySummary = null;
+        }
 
         const guessResults = {
             tally: guessResultsData.tally,
             leadingTeam: guessResultsData.leadingTeam,
             success: playersCaught,
+            votes: voteCount,
+            eligible: eligibleCount,
+            required: requiredVotes,
+            hasEnoughVotes,
+            penaltyApplied,
+            penalty: penaltySummary,
         };
+
+        if (penaltyError) {
+            guessResults.penaltyError = penaltyError;
+        }
 
         await updateHacknightState({
             xadowStage: 'complete',
@@ -563,16 +784,19 @@ app.get('/api/hacknight/status', async (req, res) => {
         const requestedEventDate = req.query.eventDate;
         const eventDate = requestedEventDate || await getCurrentEventDate();
 
+        // Ensure table exists BEFORE any reads
+        await ensurePreCheckinsTable();
         await synchronizeXadowState(eventDate);
 
         const checkins = await allAsync('SELECT event_date AS eventDate, team_id AS teamId, member_id AS memberId, checked_in_at AS checkedInAt FROM hacknight_checkins WHERE event_date = ?', [eventDate]);
+        const preCheckins = await allAsync('SELECT event_date AS eventDate, member_id AS memberId, created_at AS createdAt FROM hacknight_pre_checkins WHERE event_date = ?', [eventDate]);
         const pitchVotes = await allAsync('SELECT event_date AS eventDate, team_id AS teamId, voter_id AS voterId, appeal, surprise, time_score AS timeScore, content, effort, total, created_at AS createdAt FROM hacknight_votes_pitch WHERE event_date = ?', [eventDate]);
         const challengeVotes = await allAsync('SELECT event_date AS eventDate, team_id AS teamId, voter_id AS voterId, order_position AS orderPosition, created_at AS createdAt FROM hacknight_votes_challenge WHERE event_date = ?', [eventDate]);
         const xadowVotes = await allAsync('SELECT event_date AS eventDate, stage, team_id AS teamId, voter_id AS voterId, value, created_at AS createdAt FROM hacknight_votes_xadow WHERE event_date = ?', [eventDate]);
         const xadowDecision = await getAsync('SELECT event_date AS eventDate, team_id AS teamId, admin_id AS adminId, is_xadow_team AS isXadowTeam, decided_at AS decidedAt FROM hacknight_xadow_decision WHERE event_date = ?', [eventDate]);
         const state = await getHacknightState();
 
-        res.json({ eventDate, checkins, pitchVotes, challengeVotes, xadowVotes, xadowDecision, state });
+        res.json({ eventDate, checkins, preCheckins, pitchVotes, challengeVotes, xadowVotes, xadowDecision, state });
     } catch (error) {
         console.error('Error loading hacknight status', error);
         res.status(500).json({ error: error.message });
@@ -601,6 +825,38 @@ app.post('/api/hacknight/check-in', async (req, res) => {
     }
 });
 
+app.post('/api/hacknight/pre-checkin', async (req, res) => {
+    try {
+        const { memberId, eventDate: bodyEventDate } = req.body || {};
+        if (!memberId) {
+            return res.status(400).json({ error: 'memberId is required' });
+        }
+        const eventDate = bodyEventDate || await getCurrentEventDate();
+        await ensurePreCheckinsTable();
+        const existing = await getAsync(
+            'SELECT id FROM hacknight_pre_checkins WHERE event_date = ? AND member_id = ?',
+            [eventDate, memberId]
+        );
+        let active;
+        if (existing) {
+            await runAsync('DELETE FROM hacknight_pre_checkins WHERE event_date = ? AND member_id = ?', [eventDate, memberId]);
+            active = false;
+        } else {
+            await runAsync('INSERT INTO hacknight_pre_checkins (event_date, member_id) VALUES (?, ?)', [eventDate, memberId]);
+            active = true;
+        }
+        const preCheckins = await allAsync(
+            'SELECT event_date AS eventDate, member_id AS memberId, created_at AS createdAt FROM hacknight_pre_checkins WHERE event_date = ?',
+            [eventDate]
+        );
+        broadcastUpdate({ type: 'hacknight-precheckins', eventDate, preCheckins });
+        res.json({ success: true, eventDate, memberId, active, preCheckins });
+    } catch (error) {
+        console.error('Error toggling pre-checkin', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/hacknight/vote/pitch', async (req, res) => {
     try {
         const state = await getHacknightState();
@@ -614,8 +870,18 @@ app.post('/api/hacknight/vote/pitch', async (req, res) => {
         }
 
         const eventDate = bodyEventDate || await getCurrentEventDate();
+        const voterCheckin = await getAsync(
+            'SELECT team_id AS teamId FROM hacknight_checkins WHERE event_date = ? AND member_id = ?',
+            [eventDate, voterId]
+        );
+        const blockedTeamId = voterCheckin && voterCheckin.teamId ? voterCheckin.teamId : null;
+
+        let processedCount = 0;
         for (const entry of votes) {
             if (!entry || !entry.teamId) {
+                continue;
+            }
+            if (blockedTeamId && entry.teamId === blockedTeamId) {
                 continue;
             }
             const scores = entry.scores || {};
@@ -631,6 +897,11 @@ app.post('/api/hacknight/vote/pitch', async (req, res) => {
                  ON CONFLICT(event_date, team_id, voter_id) DO UPDATE SET appeal = excluded.appeal, surprise = excluded.surprise, time_score = excluded.time_score, content = excluded.content, effort = excluded.effort, total = excluded.total, created_at = CURRENT_TIMESTAMP`,
                 [eventDate, entry.teamId, voterId, appeal, surprise, timeScore, content, effort, total]
             );
+            processedCount += 1;
+        }
+
+        if (processedCount === 0) {
+            return res.status(400).json({ error: 'Não podes votar na tua própria equipa.' });
         }
 
         const pitchVotes = await allAsync('SELECT event_date AS eventDate, team_id AS teamId, voter_id AS voterId, appeal, surprise, time_score AS timeScore, content, effort, total, created_at AS createdAt FROM hacknight_votes_pitch WHERE event_date = ?', [eventDate]);
@@ -655,8 +926,18 @@ app.post('/api/hacknight/vote/challenge', async (req, res) => {
         }
 
         const eventDate = bodyEventDate || await getCurrentEventDate();
+        const voterCheckin = await getAsync(
+            'SELECT team_id AS teamId FROM hacknight_checkins WHERE event_date = ? AND member_id = ?',
+            [eventDate, voterId]
+        );
+        const blockedTeamId = voterCheckin && voterCheckin.teamId ? voterCheckin.teamId : null;
+
+        let processedCount = 0;
         for (const entry of orderings) {
             if (!entry || !entry.teamId) {
+                continue;
+            }
+            if (blockedTeamId && entry.teamId === blockedTeamId) {
                 continue;
             }
             const orderPosition = parseInt(entry.order, 10);
@@ -666,6 +947,11 @@ app.post('/api/hacknight/vote/challenge', async (req, res) => {
                  ON CONFLICT(event_date, team_id, voter_id) DO UPDATE SET order_position = excluded.order_position, created_at = CURRENT_TIMESTAMP`,
                 [eventDate, entry.teamId, voterId, Number.isNaN(orderPosition) ? null : orderPosition]
             );
+            processedCount += 1;
+        }
+
+        if (processedCount === 0) {
+            return res.status(400).json({ error: 'Não podes votar na tua própria equipa.' });
         }
 
         const challengeVotes = await allAsync('SELECT event_date AS eventDate, team_id AS teamId, voter_id AS voterId, order_position AS orderPosition, created_at AS createdAt FROM hacknight_votes_challenge WHERE event_date = ?', [eventDate]);
@@ -720,6 +1006,13 @@ app.post('/api/hacknight/vote/xadow/guess', async (req, res) => {
         }
 
         const eventDate = bodyEventDate || await getCurrentEventDate();
+        const voterCheckin = await getAsync(
+            'SELECT team_id AS teamId FROM hacknight_checkins WHERE event_date = ? AND member_id = ?',
+            [eventDate, voterId]
+        );
+        if (voterCheckin && voterCheckin.teamId && voterCheckin.teamId === teamId) {
+            return res.status(400).json({ error: 'Não podes votar na tua própria equipa.' });
+        }
         await runAsync(
             `INSERT INTO hacknight_votes_xadow (event_date, stage, team_id, voter_id, value)
              VALUES (?, 'guess', ?, ?, ?)
@@ -800,26 +1093,61 @@ app.post('/api/hacknight/xadow/trigger', async (req, res) => {
                     'SELECT team_id AS teamId FROM hacknight_votes_xadow WHERE event_date = ? AND stage = ?',
                     [eventDate, 'guess']
                 );
-                const tally = guessVotes.reduce((acc, vote) => {
-                    const key = vote.teamId || 'unknown';
-                    acc[key] = (acc[key] || 0) + 1;
-                    return acc;
-                }, {});
-                const sorted = Object.entries(tally)
-                    .map(([teamId, count]) => ({ teamId, count }))
-                    .sort((a, b) => {
-                        if (b.count === a.count) {
-                            return a.teamId.localeCompare(b.teamId);
+                const guessResultsData = computeGuessResults(guessVotes);
+                const checkins = await allAsync(
+                    'SELECT member_id FROM hacknight_checkins WHERE event_date = ?',
+                    [eventDate]
+                );
+                const eligibleCount = checkins.length;
+                const voteCount = guessVotes.length;
+                const requiredVotes = eligibleCount === 0 ? 0 : Math.max(1, Math.floor(eligibleCount * 0.8));
+                const hasEnoughVotes = eligibleCount > 0 && voteCount >= requiredVotes;
+
+                const playersCaught = Boolean(
+                    hasEnoughVotes &&
+                    guessResultsData.leadingTeam &&
+                    targetTeam &&
+                    guessResultsData.leadingTeam === targetTeam
+                );
+
+                const previousGuessResults = state.guessResults || {};
+                let penaltyApplied = Boolean(previousGuessResults.penaltyApplied);
+                let penaltySummary = previousGuessResults.penalty || null;
+                let penaltyError = null;
+
+                if (hasEnoughVotes && !playersCaught) {
+                    if (!penaltyApplied) {
+                        try {
+                            penaltySummary = await applyXadowPenalty({ eventDate });
+                            penaltyApplied = true;
+                        } catch (error) {
+                            penaltyApplied = false;
+                            penaltySummary = null;
+                            penaltyError = error.message || 'Falha ao aplicar penalização xad0w.b1ts';
+                            console.error('Error applying xad0w.b1ts penalty', error);
                         }
-                        return b.count - a.count;
-                    });
-                const leading = sorted.length > 0 ? sorted[0].teamId : null;
-                const playersCaught = Boolean(leading && leading === targetTeam);
+                    }
+                } else {
+                    penaltyApplied = false;
+                    penaltySummary = null;
+                }
+
                 guessResults = {
-                    tally,
-                    leadingTeam: leading,
-                    success: playersCaught
+                    tally: guessResultsData.tally,
+                    leadingTeam: guessResultsData.leadingTeam,
+                    success: playersCaught,
+                    votes: voteCount,
+                    eligible: eligibleCount,
+                    required: requiredVotes,
+                    hasEnoughVotes,
+                    penaltyApplied,
+                    penalty: penaltySummary,
                 };
+
+                if (penaltyError) {
+                    guessResults.penaltyError = penaltyError;
+                }
+
                 patch.guessResults = guessResults;
 
                 await runAsync(

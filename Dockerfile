@@ -15,6 +15,9 @@ COPY . .
 # Expose port
 EXPOSE 3000
 
+# Set environment variable for React
+ENV CHOKIDAR_USEPOLLING=true
+
 # Start development server
 CMD ["npm", "start"]
 

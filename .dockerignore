@@ -1,11 +1,37 @@
-node_modules
-npm-debug.log
-build
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+build/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
 .git
 .gitignore
-.env
-.DS_Store
-.vscode
-coverage
+
+# Logs
 *.log
 
+# Old stuff
+old_stuff/
+
+# Sprint docs
+sprint/

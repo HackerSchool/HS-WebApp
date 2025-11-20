@@ -498,8 +498,8 @@ const PointsHistory = () => {
             const resolvedPoints = targetAssignee.points || formData.teamPoints;
             const parsedPoints = parseInt(resolvedPoints, 10);
 
-            if (Number.isNaN(parsedPoints) || parsedPoints <= 0) {
-                setMessage('Please provide a valid points value.');
+            if (Number.isNaN(parsedPoints) || parsedPoints === 0) {
+                setMessage('Please provide a non-zero points value.');
                 setSaving(false);
                 return;
             }

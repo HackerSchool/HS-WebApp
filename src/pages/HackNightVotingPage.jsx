@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useHacknightStatus from '../hooks/useHacknightStatus';
 import { useAuth } from '../contexts/AuthContext';
 import { getProjects } from '../services/projectService';
 import { getMembers } from '../services/memberService';
+import { getMemberParticipations } from '../services/projectParticipationService';
 import {
     submitCheckIn,
     submitPitchVotes,
@@ -82,7 +83,9 @@ const HackNightVotingPage = () => {
     const [xadowMessage, setXadowMessage] = useState(null);
 
     const [lastResetAt, setLastResetAt] = useState(null);
+    const [userParticipations, setUserParticipations] = useState([]);
     const [nowTimestamp, setNowTimestamp] = useState(Date.now());
+    const previousXadowStageRef = useRef(null);
 
     const currentUserId = user?.username || localStorage.getItem('username');
 
@@ -105,6 +108,23 @@ const HackNightVotingPage = () => {
         };
         loadBasics();
     }, []);
+
+    useEffect(() => {
+        const fetchParticipations = async () => {
+            if (!currentUserId) {
+                setUserParticipations([]);
+                return;
+            }
+            try {
+                const data = await getMemberParticipations(currentUserId);
+                setUserParticipations(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error('Erro a carregar participações do membro:', error);
+                setUserParticipations([]);
+            }
+        };
+        fetchParticipations();
+    }, [currentUserId]);
 
     useEffect(() => {
         const resetMarker = status?.state?.lastResetAt || null;
@@ -155,6 +175,22 @@ const HackNightVotingPage = () => {
         return map;
     }, [projects]);
 
+    const allowedCheckInProjects = useMemo(() => {
+        if (!currentUserId) return [];
+        if (!projects.length) return [];
+        if (!userParticipations.length) return [];
+
+        const allowedNames = new Set(
+            userParticipations
+                .map((participation) => participation?.project_name)
+                .filter(Boolean)
+        );
+
+        return projects.filter((project) =>
+            allowedNames.has(project.name || project.title)
+        );
+    }, [projects, userParticipations, currentUserId]);
+
     const checkedInTeams = useMemo(() => {
         if (!status?.checkins) return [];
         const byTeam = new Map();
@@ -182,11 +218,54 @@ const HackNightVotingPage = () => {
         return Array.from(byTeam.values());
     }, [status, projectsMap, membersMap]);
 
-    useEffect(() => {
-        if (!checkInTeam && projects.length) {
-            setCheckInTeam(projects[0]?.slug || projects[0]?.id || projects[0]?.name || '');
+    const ownTeamIds = useMemo(() => {
+        const ids = new Set();
+        if (currentUserId) {
+            checkedInTeams.forEach((team) => {
+                if (team.members.some((member) => member.id === currentUserId)) {
+                    ids.add(team.teamId);
+                }
+            });
         }
-    }, [projects, checkInTeam]);
+        userParticipations.forEach((participation) => {
+            if (!participation) return;
+            const slugCandidates = [
+                participation.project_slug,
+                participation.slug,
+                participation.project?.slug,
+            ].filter(Boolean);
+            slugCandidates.forEach((slug) => ids.add(slug));
+            const projectName =
+                participation.project_name || participation.project?.name || null;
+            if (projectName) {
+                projects.forEach((project) => {
+                    const identifier = project.slug || project.id || project.name;
+                    const comparableName = project.name || project.title;
+                    if (identifier && comparableName === projectName) {
+                        ids.add(identifier);
+                    }
+                });
+            }
+        });
+        return ids;
+    }, [checkedInTeams, currentUserId, userParticipations, projects]);
+
+    useEffect(() => {
+        if (!allowedCheckInProjects.length) {
+            setCheckInTeam('');
+            return;
+        }
+
+        const currentExists = allowedCheckInProjects.some((project) => {
+            const id = project.slug || project.id || project.name;
+            return id === checkInTeam;
+        });
+
+        if (!currentExists) {
+            const firstAllowed = allowedCheckInProjects[0];
+            setCheckInTeam(firstAllowed.slug || firstAllowed.id || firstAllowed.name || '');
+        }
+    }, [allowedCheckInProjects, checkInTeam]);
 
     const userPitchVotes = useMemo(() => {
         if (!status?.pitchVotes || !currentUserId) return [];
@@ -371,6 +450,14 @@ const HackNightVotingPage = () => {
         return deadlineDate.getTime() > nowTimestamp;
     }, [xadowStage, guessDeadline, nowTimestamp]);
 
+    useEffect(() => {
+        const previousStage = previousXadowStageRef.current;
+        if (previousStage === 'decision' && xadowStage !== 'decision') {
+            setXadowMessage(null);
+        }
+        previousXadowStageRef.current = xadowStage;
+    }, [xadowStage]);
+
     const handleCheckInSubmit = async (event) => {
         event.preventDefault();
         if (!currentUserId) {
@@ -379,6 +466,14 @@ const HackNightVotingPage = () => {
         }
         if (!checkInTeam) {
             setCheckInMessage({ type: 'error', text: 'Seleciona uma equipa antes de confirmar.' });
+            return;
+        }
+        const isAllowedTeam = allowedCheckInProjects.some((project) => {
+            const id = project.slug || project.id || project.name;
+            return id === checkInTeam;
+        });
+        if (!isAllowedTeam) {
+            setCheckInMessage({ type: 'error', text: 'Essa equipa não está associada à tua conta.' });
             return;
         }
         try {
@@ -403,6 +498,9 @@ const HackNightVotingPage = () => {
     };
 
     const handlePitchScoreChange = (teamId, category, value) => {
+        if (ownTeamIds.has(teamId)) {
+            return;
+        }
         setPitchScores((prev) => {
             const current = prev[teamId] || {
                 appeal: 5,
@@ -422,6 +520,9 @@ const HackNightVotingPage = () => {
     };
 
     const handlePitchQuickSet = (teamId, category, value) => {
+        if (ownTeamIds.has(teamId)) {
+            return;
+        }
         handlePitchScoreChange(teamId, category, value);
     };
 
@@ -434,7 +535,18 @@ const HackNightVotingPage = () => {
         try {
             setPitchSubmitting(true);
             setPitchMessage(null);
-            const votesPayload = checkedInTeams.map((team) => ({
+            const eligibleTeams = checkedInTeams.filter(
+                (team) => !ownTeamIds.has(team.teamId)
+            );
+            if (!eligibleTeams.length) {
+                setPitchMessage({
+                    type: 'error',
+                    text: 'Não há equipas elegíveis para avaliares — a tua própria equipa está bloqueada.',
+                });
+                setPitchSubmitting(false);
+                return;
+            }
+            const votesPayload = eligibleTeams.map((team) => ({
                 teamId: team.teamId,
                 scores: pitchScores[team.teamId] || {
                     appeal: 5,
@@ -467,6 +579,9 @@ const HackNightVotingPage = () => {
     };
 
     const handleChallengeOrderChange = (teamId, value) => {
+        if (ownTeamIds.has(teamId)) {
+            return;
+        }
         setChallengeOrder((prev) => ({
             ...prev,
             [teamId]: value === '' ? '' : parseInt(value, 10),
@@ -482,7 +597,18 @@ const HackNightVotingPage = () => {
         try {
             setChallengeSubmitting(true);
             setChallengeMessage(null);
-            const orderings = checkedInTeams.map((team) => ({
+            const eligibleTeams = checkedInTeams.filter(
+                (team) => !ownTeamIds.has(team.teamId)
+            );
+            if (!eligibleTeams.length) {
+                setChallengeMessage({
+                    type: 'error',
+                    text: 'Não podes ordenar a tua própria equipa — nenhuma outra equipa está disponível.',
+                });
+                setChallengeSubmitting(false);
+                return;
+            }
+            const orderings = eligibleTeams.map((team) => ({
                 teamId: team.teamId,
                 order: challengeOrder[team.teamId] ?? '',
             }));
@@ -550,6 +676,10 @@ const HackNightVotingPage = () => {
             setXadowMessage({ type: 'error', text: 'Escolhe uma equipa como suspeita.' });
             return;
         }
+        if (ownTeamIds.has(guessSelection)) {
+            setXadowMessage({ type: 'error', text: 'Não podes votar na tua própria equipa.' });
+            return;
+        }
         try {
             setGuessSubmitting(true);
             setXadowMessage(null);
@@ -594,6 +724,8 @@ const HackNightVotingPage = () => {
         return (
             <form className="pitch-grid" onSubmit={handlePitchSubmit}>
                 {checkedInTeams.map((team) => {
+                    const isOwnTeam = ownTeamIds.has(team.teamId);
+                    const teamLocked = pitchLocked || isOwnTeam;
                     const scores = pitchScores[team.teamId] || {
                         appeal: 5,
                         surprise: 5,
@@ -604,13 +736,16 @@ const HackNightVotingPage = () => {
                     return (
                         <div
                             key={team.teamId}
-                            className={`pitch-card ${pitchLocked ? 'pitch-card--locked' : ''}`}
+                            className={`pitch-card ${teamLocked ? 'pitch-card--locked' : ''} ${
+                                isOwnTeam ? 'pitch-card--self' : ''
+                            }`}
                         >
                             <div className="pitch-card__header" style={{ '--team-color': team.color }}>
                                 <h3>{team.name}</h3>
                                 <span className="pitch-card__members-count">
                                     {team.members.length} participante{team.members.length === 1 ? '' : 's'}
                                 </span>
+                                {isOwnTeam && <span className="pitch-card__self-tag">A tua equipa</span>}
                             </div>
                             <div className="pitch-card__body">
                                 {PITCH_CATEGORIES.map((category) => (
@@ -627,7 +762,7 @@ const HackNightVotingPage = () => {
                                                     max={5}
                                                     step={1}
                                                     value={scores[category.key]}
-                                                    disabled={pitchLocked}
+                                                    disabled={teamLocked}
                                                     onChange={(event) =>
                                                         handlePitchScoreChange(
                                                             team.teamId,
@@ -645,7 +780,7 @@ const HackNightVotingPage = () => {
                                                         className={`quick-score ${
                                                             value === scores[category.key] ? 'is-active' : ''
                                                         }`}
-                                                        disabled={pitchLocked}
+                                                    disabled={teamLocked}
                                                         onClick={() =>
                                                             handlePitchQuickSet(
                                                                 team.teamId,
@@ -661,6 +796,11 @@ const HackNightVotingPage = () => {
                                         </div>
                                     </div>
                                 ))}
+                                {isOwnTeam && (
+                                    <p className="pitch-card__self-note">
+                                        Não podes avaliar a tua própria equipa.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     );
@@ -689,12 +829,15 @@ const HackNightVotingPage = () => {
         }
         return (
             <form className="challenge-grid" onSubmit={handleChallengeSubmit}>
-                {checkedInTeams.map((team) => (
+                {checkedInTeams.map((team) => {
+                    const isOwnTeam = ownTeamIds.has(team.teamId);
+                    return (
                     <div
                         key={team.teamId}
                         className={`challenge-card ${
                             challengeLocked ? 'challenge-card--locked' : ''
                         }`}
+                        data-own-team={isOwnTeam ? 'true' : 'false'}
                     >
                         <div className="challenge-card__team">
                             <span className="challenge-card__badge" style={{ '--team-color': team.color }}>
@@ -702,7 +845,7 @@ const HackNightVotingPage = () => {
                             </span>
                             <div>
                                 <h3>{team.name}</h3>
-                                <p>{team.members.length} hacker{team.members.length === 1 ? '' : 's'} prontos</p>
+                                {isOwnTeam && <span className="challenge-card__self-tag">A tua equipa</span>}
                             </div>
                         </div>
                         <div className="challenge-card__input">
@@ -714,11 +857,17 @@ const HackNightVotingPage = () => {
                                 onChange={(event) =>
                                     handleChallengeOrderChange(team.teamId, event.target.value)
                                 }
-                                disabled={challengeLocked}
+                                disabled={challengeLocked || isOwnTeam}
                             />
                         </div>
+                        {isOwnTeam && (
+                            <p className="challenge-card__self-note">
+                                Não podes definir a ordem da tua própria equipa.
+                            </p>
+                        )}
                     </div>
-                ))}
+                );
+                })}
                 <div className="challenge-actions">
                     {renderMessage(challengeMessage)}
                     <button
@@ -845,19 +994,37 @@ const HackNightVotingPage = () => {
                                 Escolhe a equipa que achas que anda a operar nas sombras. Tensão máxima!
                             </p>
                             <form className="xadow-guess-grid" onSubmit={handleGuessSubmit}>
-                                {teamsList.map((team) => (
-                                    <button
-                                        type="button"
-                                        key={team.id}
-                                        className={`xadow-guess ${guessSelection === team.id ? 'is-selected' : ''}`}
-                                        style={{ '--team-color': team.color }}
-                                        onClick={() => setGuessSelection(team.id)}
-                                        disabled={guessSubmitting || !!userGuessVote}
-                                    >
-                                        <span className="xadow-guess__badge">{team.name.slice(0, 2).toUpperCase()}</span>
-                                        <span>{team.name}</span>
-                                    </button>
-                                ))}
+                                {teamsList.map((team) => {
+                                    const isOwnTeam = ownTeamIds.has(team.id);
+                                    const isSelected = guessSelection === team.id;
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={team.id}
+                                            className={`xadow-guess ${isSelected ? 'is-selected' : ''} ${
+                                                isOwnTeam ? 'is-locked' : ''
+                                            }`}
+                                            style={{ '--team-color': team.color }}
+                                            onClick={() => {
+                                                if (isOwnTeam) {
+                                                    setXadowMessage({
+                                                        type: 'error',
+                                                        text: 'Não podes votar na tua própria equipa.',
+                                                    });
+                                                    return;
+                                                }
+                                                setGuessSelection(team.id);
+                                            }}
+                                            disabled={guessSubmitting || !!userGuessVote || isOwnTeam}
+                                            title={isOwnTeam ? 'Não podes votar na tua própria equipa.' : undefined}
+                                        >
+                                            <span className="xadow-guess__badge">
+                                                {team.name.slice(0, 2).toUpperCase()}
+                                            </span>
+                                            <span>{team.name}</span>
+                                        </button>
+                                    );
+                                })}
                                 <div className="xadow-actions">
                                     {renderMessage(xadowMessage)}
                                     <button
@@ -865,7 +1032,7 @@ const HackNightVotingPage = () => {
                                         className="xadow-submit-button"
                                         disabled={guessSubmitting || !!userGuessVote}
                                     >
-                                        {guessSubmitting ? 'A enviar...' : userGuessVote ? 'Voto registado' : 'Revelar suspeito'}
+                                        {guessSubmitting ? 'A enviar...' : userGuessVote ? 'Voto registado' : 'Votar'}
                                     </button>
                                 </div>
                             </form>
@@ -886,6 +1053,15 @@ const HackNightVotingPage = () => {
                 ? projectsMap.get(xadowDecision.teamId)?.displayName || xadowDecision.teamId
                 : null;
             const topGuess = guessResultsList.length ? guessResultsList[0] : null;
+            const votesInfo = stateGuessResults
+                ? {
+                      votes: stateGuessResults.votes ?? 0,
+                      eligible: stateGuessResults.eligible ?? 0,
+                      required: stateGuessResults.required ?? 0,
+                      hasEnough: stateGuessResults.hasEnoughVotes !== false,
+                  }
+                : null;
+            const insufficientVotes = votesInfo ? !votesInfo.hasEnough : false;
             return (
                 <div
                     className={`xadow-reveal ${
@@ -893,7 +1069,13 @@ const HackNightVotingPage = () => {
                     }`}
                 >
                     <div className="xadow-reveal__content">
-                        {playersSucceeded ? (
+                        {insufficientVotes ? (
+                            <>
+                                <div className="escaped-icon">🕵️‍♂️</div>
+                                <h3>Votos insuficientes</h3>
+                                <p>Não houve votos suficientes (&gt;80%) para chegar a uma conclusão. Os xad0w.b1ts continuarão à solta!</p>
+                            </>
+                        ) : playersSucceeded ? (
                             <>
                                 <div className="villain-mask" />
                                 <h3>
@@ -901,17 +1083,19 @@ const HackNightVotingPage = () => {
                                         ? `${actualTeamName} eram os xad0w.b1ts!`
                                         : 'Os xad0w.b1ts foram apanhados!'}
                                 </h3>
-                                <p>Fantástico! Os vilões foram expostos. Mantém a guarda alta para a próxima temporada.</p>
+                                <p>Fantástico! Os vilões foram expostos. Mantém a guarda alta para a próxima jornada.</p>
                             </>
                         ) : (
                             <>
                                 <div className="escaped-icon">🕵️‍♂️</div>
-                                <h3>Os xad0w.b1ts escaparam!</h3>
-                                <p>Ninguém conseguiu descobrir quem eram... Eles continuam à solta.</p>
+                                <h3>Catástrofe: DESASTRE TOTAL! 💀</h3>
+                                <p>Os xad0w.b1ts ESCAPARAM das vossas mãos! <strong>-10 pontos PJ pelo vosso julgamento FALHADO!</strong></p>
+                                <p> A equipa xb continua à solta, e com mais 25 PS... e vocês pagaram o preço! 👁️
+                                </p>
                             </>
                         )}
                         <div className="xadow-reveal__summary">
-                            {actualTeamName && (
+                            {playersSucceeded && actualTeamName && (
                                 <p>
                                     <strong>Equipa alvo:</strong> {actualTeamName}
                                 </p>
@@ -920,6 +1104,11 @@ const HackNightVotingPage = () => {
                                 <p>
                                     <strong>Palpite mais votado:</strong>{' '}
                                     {topGuess.name || topGuess.teamId} ({topGuess.count} voto{topGuess.count === 1 ? '' : 's'})
+                                </p>
+                            )}
+                            {votesInfo && (
+                                <p>
+                                    <strong>Participação:</strong> {votesInfo.votes}/{votesInfo.eligible} votos (mín. {votesInfo.required})
                                 </p>
                             )}
                             {guessResultsList.length > 0 && (
@@ -1040,10 +1229,14 @@ const HackNightVotingPage = () => {
                                 id="checkin-team"
                                 value={checkInTeam}
                                 onChange={(event) => setCheckInTeam(event.target.value)}
-                                disabled={checkInSubmitting}
+                                disabled={checkInSubmitting || !allowedCheckInProjects.length}
                             >
-                                <option value="">Seleciona uma equipa</option>
-                                {projects.map((project) => {
+                                <option value="">
+                                    {allowedCheckInProjects.length
+                                        ? 'Seleciona uma equipa'
+                                        : 'Sem equipa atribuída'}
+                                </option>
+                                {allowedCheckInProjects.map((project) => {
                                     const id = project.slug || project.id || project.name;
                                     const label = project.name || project.title || id;
                                     return (
@@ -1053,11 +1246,16 @@ const HackNightVotingPage = () => {
                                     );
                                 })}
                             </select>
+                            {!allowedCheckInProjects.length && (
+                                <p className="info-message">
+                                    Parece que ainda não estás inscrito em nenhuma equipa. Fala com a organização para seres associado.
+                                </p>
+                            )}
                         </div>
                         <button
                             type="submit"
                             className="checkin-submit-button"
-                            disabled={checkInSubmitting}
+                            disabled={checkInSubmitting || !allowedCheckInProjects.length}
                         >
                             {checkInSubmitting ? 'A confirmar...' : 'Fazer Check-In'}
                         </button>
