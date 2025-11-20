@@ -10,7 +10,7 @@
  */
 
 // Detect if we're on hackerleague.app (production via Cloudflare Tunnel)
-const isProduction = typeof window !== 'undefined' && window.location.hostname === 'hackerleague.app';
+const isProduction = typeof window !== 'undefined' && window.location.hostname === 'hackerschool.dev';
 const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
 
 // Production API endpoint
@@ -24,7 +24,7 @@ const getAPIHost = () => {
     
     // Production: use API subdomain via HTTPS
     if (isProduction) {
-        return `${protocol}//api.hackerleague.app`;
+        return `${protocol}//api.hackerschool.dev`;
     }
     
     // Development: use localhost
@@ -62,7 +62,7 @@ const getWebSocketURL = () => {
     
     // Production: use WSS (secure WebSocket) on backend subdomain
     if (isProduction) {
-        return `wss://backend.hackerleague.app`;
+        return `wss://leagueback.hackerschool.dev`;
     }
     
     // Development: use WS (non-secure WebSocket)
