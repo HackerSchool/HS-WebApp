@@ -23,11 +23,18 @@ code {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-top: 80px; /* Space for fixed navbar */
+}
+
+.app-content {
+  flex: 1;
+  transition: margin-left 0.3s ease; /* Smooth transition for sidebar push */
 }
 
 .main-content {
   flex: 1;
   padding-top: 20px;
+  position: relative;
 }
 
 .container {

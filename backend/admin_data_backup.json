@@ -1,0 +1,109 @@
+{
+  "timestamp": "2025-11-14T12:33:54.154Z",
+  "data": [
+    {
+      "id": 1,
+      "data_type": "hallOfFame",
+      "data_key": "estrelaEmAscensao",
+      "data_value": "{\"name\":\"\",\"points\":0,\"description\":\"Podes ser a primeira equipa...\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-13 23:16:10"
+    },
+    {
+      "id": 2,
+      "data_type": "hallOfFame",
+      "data_key": "pitchDoMes",
+      "data_value": "{\"name\":\"\",\"points\":0,\"description\":\"Podes ser a primeira equipa...\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-13 23:16:10"
+    },
+    {
+      "id": 3,
+      "data_type": "hallOfFame",
+      "data_key": "hackerDoMes",
+      "data_value": "{\"name\":\"\",\"points\":0,\"description\":\"Podes ser a primeira pessoa...\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-13 23:16:10"
+    },
+    {
+      "id": 4,
+      "data_type": "hacknight",
+      "data_key": "finalCall",
+      "data_value": "{\"title\":\"X-Biters are still on the loose!\",\"description\":\"Join the hunt and prove your skills in the ultimate hacking challenge. The competition is fierce, but the rewards are legendary!\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-14 12:33:54"
+    },
+    {
+      "id": 5,
+      "data_type": "season",
+      "data_key": "currentSeason",
+      "data_value": "{\"title\":\"Current Season\",\"description\":\"🚀 Welcome to the Hacker League's Inaugural Season - where legends are born and boundaries are shattered! This isn't just another competition; it's the genesis of something extraordinary that will redefine what it means to be a hacker.\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-09-15 21:47:28"
+    },
+    {
+      "id": 6,
+      "data_type": "season",
+      "data_key": "communityGoal",
+      "data_value": "{\"title\":\"Community Goal\",\"goal\":\"30 Hackers @ HackNight\",\"progressPercentage\":63,\"finalPrize\":\"Legendary Surprise Final Prize\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-09-15 21:47:28"
+    },
+    {
+      "id": 7,
+      "data_type": "season",
+      "data_key": "stats",
+      "data_value": "{\"activeHackers\":19,\"daysRemaining\":12,\"challengesSolved\":156,\"communityEngagement\":89}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-09-15 21:47:28"
+    },
+    {
+      "id": 8,
+      "data_type": "hallOfFame",
+      "data_key": "equipaDoMes",
+      "data_value": "{\"name\":\"\",\"points\":0,\"description\":\"Podes ser a primeira equipa...\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-13 23:16:11"
+    },
+    {
+      "id": 9,
+      "data_type": "hacknight",
+      "data_key": "lastWinner",
+      "data_value": "{\"name\":\"\",\"description\":\"No winners yet - be the first!\",\"isActive\":false}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-14 12:33:54"
+    },
+    {
+      "id": 10,
+      "data_type": "hacknight",
+      "data_key": "nextEvent",
+      "data_value": "{\"name\":\"HackNight Setembro\",\"date\":\"2024-10-15T18:00:00\",\"confirmedHackers\":4,\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-14 12:33:53"
+    },
+    {
+      "id": 11,
+      "data_type": "hacknight",
+      "data_key": "hackerChallenge",
+      "data_value": "{\"title\":\"HackerChallenge\",\"description\":\"Get ready for an epic coding challenge that will test your skills and creativity! The HackerChallenge is coming soon with exciting prizes and recognition for the best hackers.\",\"status\":\"Coming Soon\",\"isActive\":true}",
+      "created_at": "2025-09-15 21:47:28",
+      "updated_at": "2025-11-14 12:33:53"
+    },
+    {
+      "id": 191,
+      "data_type": "hacknight",
+      "data_key": "photoshoot",
+      "data_value": "{\"title\":\"Last HackNight Photoshoot\",\"message\":\"Coming soon :))\",\"galleryUrl\":\"\",\"isActive\":true}",
+      "created_at": "2025-10-02 14:59:39",
+      "updated_at": "2025-10-02 14:59:39"
+    },
+    {
+      "id": 235,
+      "data_type": "hacknight",
+      "data_key": "votingState",
+      "data_value": "{\"checkinsOpen\":true,\"pitchLocked\":false,\"challengeLocked\":false,\"xadowStage\":\"idle\",\"decisionDeadline\":null,\"guessDeadline\":null,\"lastResetAt\":\"2025-11-14T11:48:52.678Z\",\"xadowTargetTeam\":null,\"decisionResults\":null,\"guessResults\":null}",
+      "created_at": "2025-11-10 13:46:17",
+      "updated_at": "2025-11-14 12:33:50"
+    }
+  ]
+}

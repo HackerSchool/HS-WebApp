@@ -1,17 +1,5 @@
-/* Login Container - follows the same pattern as other pages */
-.login-container {
-    min-height: 100vh;
-    background: transparent;
-    color: white;
-    padding: 2rem;
-    position: relative;
-    overflow-x: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.login-container::before {
+/* Auth Container - full screen layout */
+.auth-container::before {
     content: '';
     position: fixed;
     top: 0;
@@ -19,19 +7,37 @@
     right: 0;
     bottom: 0;
     background-image: 
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.6) 0%, transparent 60%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4) 0%, transparent 60%),
-        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 20% 80%, rgba(109, 186, 118, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(22, 99, 131, 0.4) 0%, transparent 60%),
+        radial-gradient(circle at 40% 40%, rgba(195, 25, 87, 0.5) 0%, transparent 60%),
         radial-gradient(circle at 60% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;
 }
 
 .auth-container {
+    min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 100%;
+    position: relative;
+    overflow-x: hidden;
+    padding-top: 0px;
+}
+
+.logo {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding-top: 0px;
+    height: 48px;
+}
+
+.logo-img {
+    max-width: 200px;
+    height: 48px;
+    width: auto;
 }
 
 .auth-card {
@@ -44,9 +50,10 @@
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    color: white;
     padding: 2rem;
-    width: 100%;
-    max-width: 480px;
+    width: 450px;
+    max-width: 450px;
     opacity: 0.98;
     transition: all 0.3s ease;
 }
@@ -68,6 +75,17 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+.hs-login-title {
+    font-family: 'Lato', sans-serif;
+    font-weight: 700 !important;
+    width: 386px;
+    height: auto;
+    min-height: 39.5938px;
+    font-size: 35.2px;
+    margin-bottom: 24px;
+    line-height: 1.2;
 }
 
 @keyframes titleGlow {
@@ -92,10 +110,12 @@
     margin-bottom: 5px;
     font-weight: bold;
     color: white;
+    font-size: 16px;
 }
 
 .auth-form .form-group input {
-    width: 100%;
+    width: 386px;
+    height: 40px;
     padding: 12px 16px;
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
@@ -125,20 +145,21 @@
 }
 
 .auth-btn {
-    width: 100%;
+    width: 386px;
+    height: 34px;
     margin-bottom: 1rem;
     padding: 12px;
     font-size: 16px;
 }
 
 .auth-btn.btn-primary {
-    background: linear-gradient(135deg, #6dba83, #4f7777);
+    background: #6dba83;
     border-color: transparent;
     color: white;
 }
 
 .auth-btn.btn-primary:hover {
-    background: linear-gradient(135deg, #4f7777, #6dba83);
+    background: #5aa86e;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(109, 186, 118, 0.3);
 }
@@ -155,30 +176,24 @@
 }
 
 .auth-divider {
+    display: flex;
+    align-items: center;
     text-align: center;
-    margin: 1.5rem 0;
-    position: relative;
+    margin: 1rem 0;
 }
 
-.auth-divider::before {
+.auth-divider::before,
+.auth-divider::after {
     content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
+    flex: 1;
     height: 1px;
-    background: rgba(255, 255, 255, 0.2);
+    background: #dbdbdb;
 }
 
 .auth-divider span {
-    background: #302e2e;
-    padding: 0 1.5rem;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 14px;
-    position: relative;
-    z-index: 1;
-    border-radius: 20px;
-    border: 2px solid transparent;
+    padding: 0 1rem;
+    color: #7a7a7a;
+    font-size: 0.875rem;
 }
 
 .auth-footer {
@@ -202,6 +217,138 @@
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
+/* Validation styles */
+.help.is-danger {
+    color: #ff4136;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+    width: 386px;
+    height: 18px;
+}
+
+/* Password toggle styles */
+.password-input-container {
+    position: relative;
+}
+
+.base-button {
+    cursor: pointer;
+    display: inline-block;
+    color: inherit;
+    font: inherit;
+    user-select: none;
+    pointer-events: auto;
+    border-radius: 8px;
+}
+
+.base-button:focus, .base-button.is-focused {
+    outline: transparent;
+}
+
+.base-button[disabled] {
+    cursor: default;
+}
+
+.base-button--type-button {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    background-color: transparent;
+    text-align: center;
+    appearance: none;
+}
+
+.password-field-type-toggle {
+    position: absolute;
+    color: #9ca3af;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+}
+
+
+/* Utility classes */
+.is-fullwidth {
+    width: 100%;
+}
+
+.mbs-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mbs-4 {
+    margin-bottom: 0;
+}
+
+/* Admin contact box */
+.admin-contact-box {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.2) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.admin-contact-text {
+    color: white;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.hs-admin-text-white {
+    color: white;
+    font-weight: 500;
+}
+
+/* Login button styles */
+.hs-login-button {
+    background: #6dba83;
+    border: none;
+    box-shadow: 0 4px 15px rgba(109, 186, 131, 0.3);
+}
+
+.hs-login-button:hover {
+    background: #5aa86e;
+    box-shadow: 0 6px 20px rgba(109, 186, 131, 0.4);
+    transform: translateY(-1px);
+}
+
+.hs-login-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(109, 186, 131, 0.3);
+}
+
+/* Field and label styles */
+.field {
+    margin-bottom: 15px;
+}
+
+.field .label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: white;
+    font-size: 16px;
+}
+
+.mie-1 {
+    margin-inline-end: 0.25rem;
+}
+
 @media (max-width: 480px) {
     .auth-card {
         padding: 1.5rem;
@@ -210,4 +357,15 @@
     .auth-card h2 {
         font-size: 1.5rem;
     }
-} 
+}
+
+/* Prevent browser's default password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-caps-lock-indicator {
+    display: none;
+}

@@ -237,6 +237,115 @@ export const mockUserAPI = {
         return { success: true, message: 'Logo uploaded successfully' };
     },
 
+    // Admin API functions
+    getAllUsers: async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const allUsers = [];
+        for (const [username, userData] of Object.entries(userProfileData)) {
+            allUsers.push({
+                id: userData.memberNumber || Math.floor(Math.random() * 1000),
+                username,
+                ...userData
+            });
+        }
+        return allUsers;
+    },
+
+    createUser: async (userData) => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        userProfileData[userData.username] = {
+            ...userData,
+            memberNumber: Math.floor(Math.random() * 1000) + 100,
+            joinDate: new Date().toISOString().split('T')[0]
+        };
+        return { success: true, message: 'User created successfully' };
+    },
+
+    deleteUser: async (username) => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        delete userProfileData[username];
+        return { success: true, message: 'User deleted successfully' };
+    },
+
+    // Points history management
+    getAllPointsHistory: async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        let allHistory = [];
+        let idCounter = 1;
+        
+        for (const teamName in historyData) {
+            for (const entry of historyData[teamName]) {
+                allHistory.push({
+                    id: idCounter++,
+                    ...entry,
+                    createdAt: entry.data,
+                    updatedAt: entry.data
+                });
+            }
+        }
+        
+        return allHistory.sort((a, b) => new Date(b.data) - new Date(a.data));
+    },
+
+    createPointsEntry: async (pointsData) => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const { members, description, points, type } = pointsData;
+        const date = new Date().toISOString().split('T')[0];
+        
+        // Add entries for each selected member
+        members.forEach(member => {
+            const memberData = userProfileData[member.username];
+            const team = memberData?.teams?.[0] || 'No Team';
+            
+            if (!historyData[team]) {
+                historyData[team] = [];
+            }
+            
+            historyData[team].push({
+                membro: member.name,
+                equipa: team,
+                descrição: description,
+                data: date,
+                tipo: type,
+                pontos: points
+            });
+        });
+        
+        return { success: true, message: 'Points awarded successfully' };
+    },
+
+    updatePointsEntry: async (id, pointsData) => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // Find and update the entry
+        for (const teamName in historyData) {
+            const entryIndex = historyData[teamName].findIndex((_, index) => index + 1 === id);
+            if (entryIndex !== -1) {
+                historyData[teamName][entryIndex] = {
+                    ...historyData[teamName][entryIndex],
+                    descrição: pointsData.description,
+                    pontos: pointsData.points,
+                    tipo: pointsData.type,
+                    data: pointsData.date || historyData[teamName][entryIndex].data
+                };
+                return { success: true, message: 'Points entry updated successfully' };
+            }
+        }
+        throw new Error('Points entry not found');
+    },
+
+    deletePointsEntry: async (id) => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        // Find and delete the entry
+        for (const teamName in historyData) {
+            const entryIndex = historyData[teamName].findIndex((_, index) => index + 1 === id);
+            if (entryIndex !== -1) {
+                historyData[teamName].splice(entryIndex, 1);
+                return { success: true, message: 'Points entry deleted successfully' };
+            }
+        }
+        throw new Error('Points entry not found');
+    },
+
     // Hall of Fame data service
     getHallOfFameData: async () => {
         await new Promise(resolve => setTimeout(resolve, 200));

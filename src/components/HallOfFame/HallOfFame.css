@@ -16,9 +16,9 @@
     right: 0;
     bottom: 0;
     background-image: 
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.6) 0%, transparent 60%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4) 0%, transparent 60%),
-        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 20% 80%, rgba(109, 186, 118, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(22, 99, 131, 0.4) 0%, transparent 60%),
+        radial-gradient(circle at 40% 40%, rgba(195, 25, 87, 0.5) 0%, transparent 60%),
         radial-gradient(circle at 60% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%);
     pointer-events: none;
     z-index: -1;

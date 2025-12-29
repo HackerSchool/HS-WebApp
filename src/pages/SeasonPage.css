@@ -1,0 +1,404 @@
+.season-container {
+    min-height: 100vh;
+    background: transparent;
+    color: white;
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.season-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4) 0%, transparent 60%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 60% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.community-goal-section {
+    margin-bottom: 3rem;
+}
+
+.goal-title {
+    font-size: 2rem;
+    color: #6dba76;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.goal-card {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.9) 0%, 
+        rgba(43, 42, 40, 0.85) 25%, 
+        rgba(35, 34, 32, 0.9) 50%, 
+        rgba(50, 48, 45, 0.85) 75%, 
+        rgba(43, 42, 40, 0.9) 100%);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0.98;
+    transition: opacity 0.3s ease;
+    padding: 3rem;
+}
+
+.goal-card:hover {
+    opacity: 1;
+}
+
+.goal-description {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.goal-text {
+    font-size: 1.5rem;
+    color: #3a86ff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.progress-container {
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    position: relative;
+    background: rgba(109, 186, 118, 0.1);
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 2px solid rgba(109, 186, 118, 0.3);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6dba76, #3a86ff);
+    border-radius: 8px;
+    transition: width 2s ease-in-out;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.current-count {
+    color: #6dba76;
+}
+
+.separator {
+    margin: 0 0.5rem;
+    opacity: 0.7;
+}
+
+.target-count {
+    color: #3a86ff;
+}
+
+.progress-percentage {
+    text-align: center;
+}
+
+.percentage {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #6dba76;
+    background: rgba(109, 186, 118, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    border: 2px solid rgba(109, 186, 118, 0.3);
+}
+
+.final-prize-section {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(109, 186, 118, 0.05);
+    border-radius: 15px;
+    border: 2px dashed rgba(109, 186, 118, 0.3);
+}
+
+.prize-label {
+    font-size: 1rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.prize-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.prize-icon {
+    font-size: 2rem;
+}
+
+.prize-text {
+    font-size: 1.3rem;
+    color: #6dba76;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.season-top-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    color: #6dba76;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.announcement-section,
+.final-call-section {
+    background: linear-gradient(135deg,
+        rgba(43, 42, 40, 0.9) 0%,
+        rgba(43, 42, 40, 0.85) 25%,
+        rgba(35, 34, 32, 0.9) 50%,
+        rgba(50, 48, 45, 0.85) 75%,
+        rgba(43, 42, 40, 0.9) 100%);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0.98;
+    transition: opacity 0.3s ease;
+    padding: 2rem;
+}
+
+.announcement-section:hover,
+.final-call-section:hover {
+    opacity: 1;
+}
+
+.call-to-action {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.call-title {
+    font-size: 2rem;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.call-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.join-button {
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.join-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
+.challenge-card {
+    text-align: center;
+}
+
+.challenge-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.challenge-status {
+    display: flex;
+    justify-content: center;
+}
+
+.status-badge {
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-badge.coming-soon {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.challenge-button {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 1rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.challenge-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(109, 186, 118, 0.4);
+}
+
+.season-stats {
+    margin-top: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, 
+        rgba(43, 42, 40, 0.85) 0%, 
+        rgba(35, 34, 32, 0.9) 50%, 
+        rgba(43, 42, 40, 0.85) 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-width: 150px;
+    opacity: 0.95;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 215, 0, 0.4);
+    opacity: 1;
+    background: linear-gradient(135deg, 
+        rgba(50, 48, 45, 0.9) 0%, 
+        rgba(43, 42, 40, 0.95) 50%, 
+        rgba(50, 48, 45, 0.9) 100%);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #b8c1ec;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .season-container {
+        padding: 1rem;
+    }
+    
+    .goal-title {
+        font-size: 1.5rem;
+    }
+    
+    .goal-card {
+        padding: 2rem;
+    }
+    
+    .season-top-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+}
