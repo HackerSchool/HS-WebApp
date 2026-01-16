@@ -397,14 +397,13 @@ const PointsHistory = () => {
             const shouldCreateTeamTask =
                 formData.selectedTeam !== INDIVIDUAL_OPTION &&
                 !Number.isNaN(basePoints) &&
-                basePoints !== 0 &&
                 selectedProject;
 
             if (
                 formData.selectedTeam !== INDIVIDUAL_OPTION &&
-                (Number.isNaN(basePoints) || basePoints === 0)
+                Number.isNaN(basePoints)
             ) {
-                setMessage('Please provide a non-zero point value for the team.');
+                setMessage('Please provide a valid point value for the team.');
                 setSaving(false);
                 return;
             }
@@ -424,19 +423,31 @@ const PointsHistory = () => {
 
             for (const assignee of selectedAssignees) {
                 const resolvedPoints = normalizePoints(assignee.points);
-                if (Number.isNaN(resolvedPoints) || resolvedPoints === 0) {
-                    console.warn(`Ignoring ${assignee.username} due to invalid points.`);
+                if (Number.isNaN(resolvedPoints)) {
+                    console.warn(`Ignoring ${assignee.username} due to invalid points (NaN).`);
                     failCount++;
                     continue;
                 }
 
-                const slug = await resolveProjectSlugForAssignee(
-                    assignee,
-                    selectedProject?.slug
-                );
-
-                if (!slug) {
-                    console.warn(`User ${assignee.username} has no associated project.`);
+                // For individual contributions, try to find user's project
+                // If not found, API will automatically use "Contribuições Individuais"
+                let slug = null;
+                if (formData.selectedTeam !== INDIVIDUAL_OPTION && selectedProject?.slug) {
+                    // If a team is selected, use that team's slug
+                    slug = selectedProject.slug;
+                } else if (formData.selectedTeam === INDIVIDUAL_OPTION) {
+                    // For individual contributions, try to find user's project
+                    slug = await resolveProjectSlugForAssignee(
+                        assignee,
+                        null
+                    );
+                    // If no project found, use null - API will create participation in "Contribuições Individuais"
+                    if (!slug) {
+                        slug = null;
+                    }
+                } else {
+                    // Team mode but no project selected - error
+                    setMessage(`Error: Please select a team when awarding team points.`);
                     failCount++;
                     continue;
                 }
@@ -498,8 +509,8 @@ const PointsHistory = () => {
             const resolvedPoints = targetAssignee.points || formData.teamPoints;
             const parsedPoints = parseInt(resolvedPoints, 10);
 
-            if (Number.isNaN(parsedPoints) || parsedPoints === 0) {
-                setMessage('Please provide a non-zero points value.');
+            if (Number.isNaN(parsedPoints)) {
+                setMessage('Please provide a valid points value.');
                 setSaving(false);
                 return;
             }

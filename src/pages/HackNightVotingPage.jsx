@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useHacknightStatus from '../hooks/useHacknightStatus';
 import { useAuth } from '../contexts/AuthContext';
@@ -277,7 +277,7 @@ const HackNightVotingPage = () => {
         return status.challengeVotes.filter((vote) => vote.voterId === currentUserId);
     }, [status, currentUserId]);
 
-    const xadowVotes = status?.xadowVotes || [];
+    const xadowVotes = useMemo(() => status?.xadowVotes || [], [status?.xadowVotes]);
 
     const userDecisionVote = useMemo(() => {
         if (!xadowVotes.length || !currentUserId) return null;

@@ -88,8 +88,15 @@ const LeaderboardTable = () => {
             ]);
             
             // 2. Buscar team tasks para cada projeto (em paralelo)
+            // Filter out "Contribuições Individuais" - it's not a real team
+            const INDIVIDUAL_CONTRIBUTIONS_SLUG = 'contribuicoes-individuais';
+            const realProjects = projectsData.filter(p => {
+                const slug = p.slug || p.id || p.name;
+                return slug !== INDIVIDUAL_CONTRIBUTIONS_SLUG;
+            });
+            
             const projectsWithTasks = await Promise.all(
-                projectsData.map(async (project) => {
+                realProjects.map(async (project) => {
                     try {
                         const tasks = await getProjectTeamTasks(project.slug);
                         const calculatedPoints = calculatePointsFromTasks(tasks);

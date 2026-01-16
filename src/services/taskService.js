@@ -21,7 +21,9 @@ export const updateTask = async (taskId, newTask) => {
 };
 
 export const createTask = async (slug, newTask) => {
-  const response = await api.post(`/projects/${slug}/tasks`, newTask);
+  // If slug is null/undefined, use "Contribuições Individuais" as fallback
+  const projectSlug = slug || 'contribuicoes-individuais';
+  const response = await api.post(`/projects/${projectSlug}/tasks`, newTask);
   return response.data;
 }
 
